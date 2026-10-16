@@ -201,7 +201,7 @@ public class MainActivity extends Activity {
     }
 
     // ---------- Ending a session with the in-app scanner ----------
-    // (Scanning the printed QR with any camera app also works; it fires the same focuslock:// intent.)
+    // (Scanning the printed QR with any camera app also works; it fires the same focusbuddy:// intent.)
 
     private void scanToUnlock() {
         GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()

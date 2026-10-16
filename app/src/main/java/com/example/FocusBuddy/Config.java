@@ -11,7 +11,7 @@ public final class Config {
 
     /**
      * The one hardcoded unlock secret. The printed QR code encodes
-     * focuslock://unlock?token=<this value>.
+     * focusbuddy://unlock?token=<this value>.
      *
      * To use your own: change it here, then run `python3 tools/make_qr.py`
      * to regenerate unlock-qr.png, and rebuild the app.

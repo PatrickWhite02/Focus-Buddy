@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 
-/** Receives the focuslock://unlock?token=... intent fired by scanning the printed QR code. */
+/** Receives the focusbuddy://unlock?token=... intent fired by scanning the printed QR code. */
 public class UnlockActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {

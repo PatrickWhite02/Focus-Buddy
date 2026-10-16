@@ -31,10 +31,10 @@ public final class SessionStore {
         return remainingMs(c) > 0;
     }
 
-    /** Accepts focuslock://unlock?token=... and ends the session if the token matches the hardcoded one. */
+    /** Accepts focusbuddy://unlock?token=... and ends the session if the token matches the hardcoded one. */
     public static boolean unlockFromUri(Context c, Uri uri) {
         if (uri == null
-                || !"focuslock".equals(uri.getScheme())
+                || !"focusbuddy".equals(uri.getScheme())
                 || !"unlock".equals(uri.getHost())) {
             return false;
         }
