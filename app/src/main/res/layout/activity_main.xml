@@ -16,8 +16,8 @@
             android:layout_height="wrap_content"
             android:fontFamily="@font/super_frog"
             android:text="@string/app_name"
-            android:textSize="48sp"
-            android:textStyle="bold" />
+            android:textColor="@color/primary_dark"
+            android:textSize="55sp" />
 
         <TextView
             android:id="@+id/tvStatus"
