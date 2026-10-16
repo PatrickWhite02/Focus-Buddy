@@ -1,4 +1,4 @@
-package com.example.focuslock;
+package com.example.FocusBuddy;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -64,7 +64,7 @@ public class MainActivity extends Activity {
             Intent i = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
             i.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent);
             i.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                    "Stops Focus Lock from being force-stopped or uninstalled during a focus session.");
+                    "Stops Focus Buddy from being force-stopped or uninstalled during a focus session.");
             startActivity(i);
         });
 
@@ -142,9 +142,9 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this)
                 .setTitle("Allow restricted settings first")
                 .setMessage("Android blocks sideloaded apps from using accessibility until you allow it:\n\n"
-                        + "1. Open Accessibility, tap Focus Lock, and dismiss the \"Restricted setting\" message.\n\n"
-                        + "2. Open Settings > Apps > Focus Lock, tap the \u22EE menu (top right), then \"Allow restricted settings\".\n\n"
-                        + "3. Go back to Accessibility and turn Focus Lock on.")
+                        + "1. Open Accessibility, tap Focus Buddy, and dismiss the \"Restricted setting\" message.\n\n"
+                        + "2. Open Settings > Apps > Focus Buddy, tap the \u22EE menu (top right), then \"Allow restricted settings\".\n\n"
+                        + "3. Go back to Accessibility and turn Focus Buddy on.")
                 .setPositiveButton("Open Accessibility", (d, w) -> openAccessibilitySettings())
                 .setNegativeButton("Open Apps list", (d, w) -> openAppsList())
                 .setNeutralButton("Cancel", null)
@@ -165,7 +165,7 @@ public class MainActivity extends Activity {
 
     /**
      * Start Settings in its own task. Without FLAG_ACTIVITY_NEW_TASK the Settings screen is pushed onto
-     * this app's task, so Recents shows it under the Focus Lock icon and Settings treats it as part of this app.
+     * this app's task, so Recents shows it under the Focus Buddy icon and Settings treats it as part of this app.
      */
     private void launchSettings(Intent intent) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

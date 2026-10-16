@@ -16,7 +16,7 @@
             </intent-filter>
         </activity>
 
-        <!-- The printed QR code encodes focuslock://unlock?token=... and lands here -->
+        <!-- The printed QR code encodes focusbuddy://unlock?token=... and lands here -->
         <activity
             android:name=".UnlockActivity"
             android:exported="true"
@@ -26,7 +26,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="focuslock" android:host="unlock" />
+                <data android:scheme="focusbuddy" android:host="unlock" />
             </intent-filter>
         </activity>
 

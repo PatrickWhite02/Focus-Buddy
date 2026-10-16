@@ -5,4 +5,4 @@
     android:canRetrieveWindowContent="true"
     android:notificationTimeout="100"
     android:description="@string/accessibility_description"
-    android:settingsActivity="com.example.focuslock.MainActivity" />
+    android:settingsActivity="com.example.focusbuddy.MainActivity" />

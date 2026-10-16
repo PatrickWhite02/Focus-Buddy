@@ -1,4 +1,4 @@
-package com.example.focuslock;
+package com.example.FocusBuddy;
 
 import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;

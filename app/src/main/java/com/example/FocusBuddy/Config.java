@@ -1,4 +1,4 @@
-package com.example.focuslock;
+package com.example.FocusBuddy;
 
 import java.util.Collections;
 import java.util.HashSet;

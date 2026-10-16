@@ -1,4 +1,4 @@
-package com.example.focuslock;
+package com.example.FocusBuddy;
 
 import android.accessibilityservice.AccessibilityService;
 import android.graphics.Color;
@@ -38,7 +38,7 @@ public class BlockerAccessibilityService extends AccessibilityService {
                         "Focus session in progress. Time to get back to what matters.");
             }
         } else if (Config.SETTINGS_PACKAGES.contains(pkg) && settingsShowsUs()) {
-            block("Settings locked", "You can't change Focus Lock's settings during a session.");
+            block("Settings locked", "You can't change Focus Buddy's settings during a session.");
         }
     }
 
