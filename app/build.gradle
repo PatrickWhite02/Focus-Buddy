@@ -1,0 +1,26 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.example.focusbuddy'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.example.FocusBuddy'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // In-app QR scanner (no camera permission needed). Optional fallback to scanning with a camera app.
+    implementation 'com.google.android.gms:play-services-code-scanner:16.1.0'
+}
