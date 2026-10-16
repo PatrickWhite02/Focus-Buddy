@@ -60,17 +60,27 @@
             android:orientation="vertical"
             android:gravity="center_vertical|center_horizontal">
 
-            <EditText
-                android:id="@+id/etHours"
-                android:layout_width="69dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/super_frog"
-                android:gravity="bottom|center_horizontal"
-                android:hint="Session length (hours)"
-                android:inputType="numberDecimal"
-                android:text="3"
-                android:textColor="@color/primary"
-                android:textSize="50dp" />
+                android:orientation="horizontal">
+                <EditText
+                    android:id="@+id/etHours"
+                    android:layout_width="69dp"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/super_frog"
+                    android:gravity="bottom|center_horizontal"
+                    android:hint="Session length (hours)"
+                    android:inputType="numberDecimal"
+                    android:text="3"
+                    android:textColor="@color/primary"
+                    android:textSize="50dp" />
+                <TextView
+                    style="@style/BaseButtonStyle"
+                    android:text="Hours (Decimal permitted)"
+                    />
+
+            </LinearLayout>
 
             <Button
                 android:id="@+id/btnStart"
