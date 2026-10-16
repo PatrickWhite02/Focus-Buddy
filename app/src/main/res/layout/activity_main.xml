@@ -55,15 +55,18 @@
             android:id="@+id/startGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:gravity="center_vertical|center_horizontal">
 
             <EditText
                 android:id="@+id/etHours"
-                android:layout_width="match_parent"
+                android:layout_width="69dp"
                 android:layout_height="wrap_content"
                 android:hint="Session length (hours)"
                 android:inputType="numberDecimal"
-                android:text="2" />
+                android:text="3"
+                android:textColor="@color/primary"
+                android:textSize="50dp" />
 
             <Button
                 android:id="@+id/btnStart"
