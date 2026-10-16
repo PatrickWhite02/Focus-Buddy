@@ -24,6 +24,7 @@
             android:layout_height="wrap_content"
             android:paddingTop="8dp"
             android:paddingBottom="24dp"
+            android:fontFamily="@font/super_frog"
             android:textSize="16sp" />
 
         <!-- Shown until both permissions are granted -->
@@ -37,6 +38,7 @@
                 android:id="@+id/tvSetup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/super_frog"
                 android:paddingBottom="12dp" />
 
             <Button
@@ -62,6 +64,8 @@
                 android:id="@+id/etHours"
                 android:layout_width="69dp"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/super_frog"
+                android:gravity="bottom|center_horizontal"
                 android:hint="Session length (hours)"
                 android:inputType="numberDecimal"
                 android:text="3"
@@ -88,6 +92,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:padding="24dp"
+                android:fontFamily="@font/super_frog"
                 android:textSize="48sp" />
 
             <Button
