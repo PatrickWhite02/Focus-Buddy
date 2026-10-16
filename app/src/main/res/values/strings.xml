@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Focus Buddy</string>
+    <string name="accessibility_description">Detects when a blocked app (Facebook, YouTube, Instagram) opens during a focus session and sends you back to the home screen.</string>
+</resources>
