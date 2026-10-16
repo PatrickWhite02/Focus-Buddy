@@ -2,9 +2,10 @@
 <resources>
     <style name="BaseButtonStyle">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
         <item name="android:background">@drawable/base_button_shape</item>
         <item name="android:fontFamily">@font/super_frog</item>
+        <item name="android:gravity">center_vertical|center_horizontal</item>
 
         <item name="android:autoSizeTextType">uniform</item>
         <item name="android:autoSizeMinTextSize">14sp</item>
