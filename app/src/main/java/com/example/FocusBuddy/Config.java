@@ -33,6 +33,7 @@ public final class Config {
         apps.put("com.facebook.lite", "Facebook Lite");
         apps.put("com.google.android.youtube", "YouTube");
         apps.put("com.instagram.android", "Instagram");
+        apps.put("com.reddit.frontpage", "Reddit");
         BLOCKED_APPS = Collections.unmodifiableMap(apps);
 
         Set<String> settings = new HashSet<>();
