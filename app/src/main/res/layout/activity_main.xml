@@ -27,88 +27,10 @@
             android:fontFamily="@font/super_frog"
             android:textSize="16sp" />
 
-        <!-- Shown until both permissions are granted -->
-        <LinearLayout
-            android:id="@+id/setupGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+        <!-- Screen 1: permissions / setup (see screen_setup.xml) -->
+        <include layout="@layout/screen_setup" />
 
-            <TextView
-                android:id="@+id/tvSetup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/super_frog"
-                android:paddingBottom="12dp" />
-
-            <Button
-                android:id="@+id/btnAccessibility"
-                style="@style/BaseButtonStyle"
-                android:text="Enable accessibility service" />
-
-            <Button
-                android:id="@+id/btnAdmin"
-                style="@style/BaseButtonStyle"
-                android:text="Activate device admin" />
-        </LinearLayout>
-
-        <!-- Shown when ready and idle -->
-        <LinearLayout
-            android:id="@+id/startGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_vertical|center_horizontal">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <EditText
-                    android:id="@+id/etHours"
-                    android:layout_width="69dp"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/super_frog"
-                    android:gravity="bottom|center_horizontal"
-                    android:hint="Session length (hours)"
-                    android:inputType="numberDecimal"
-                    android:text="3"
-                    android:textColor="@color/primary"
-                    android:textSize="50dp" />
-                <TextView
-                    style="@style/BaseButtonStyle"
-                    android:text="Hours (Decimal permitted)"
-                    />
-
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/btnStart"
-                style="@style/BaseButtonStyle"
-                android:text="Start focus session"
-                />
-        </LinearLayout>
-
-        <!-- Shown while a session is running -->
-        <LinearLayout
-            android:id="@+id/activeGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvCountdown"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="24dp"
-                android:fontFamily="@font/super_frog"
-                android:textSize="48sp" />
-
-            <Button
-                android:id="@+id/btnScan"
-                style="@style/BaseButtonStyle"
-                android:text="Scan QR to end session" />
-        </LinearLayout>
+        <!-- Screen 2: start + running (see screen_running.xml) -->
+        <include layout="@layout/screen_running" />
     </LinearLayout>
 </LinearLayout>

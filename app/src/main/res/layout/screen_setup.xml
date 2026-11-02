@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown until both permissions are granted -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/setupGroup"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvSetup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/super_frog"
+        android:paddingBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnAccessibility"
+        style="@style/BaseButtonStyle"
+        android:text="Enable accessibility service" />
+
+    <Button
+        android:id="@+id/btnAdmin"
+        style="@style/BaseButtonStyle"
+        android:text="Activate device admin" />
+</LinearLayout>
