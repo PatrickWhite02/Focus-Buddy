@@ -106,8 +106,8 @@ public class MainActivity extends Activity {
         btnAccessibility.setEnabled(!a11y);
         btnAdmin.setEnabled(!admin);
         btnChooseApps.setText(blockedCount == 0
-                ? "Choose apps to block"
-                : "Choose apps to block (" + blockedCount + " selected)");
+                ? "Choose what to block"
+                : "Choose what to block (" + blockedCount + " selected)");
         // The session can't start until at least one app is chosen
         btnStart.setEnabled(blockedCount > 0);
         btnStart.setAlpha(blockedCount > 0 ? 1f : 0.5f);
@@ -120,7 +120,7 @@ public class MainActivity extends Activity {
             tvCountdown.setText(String.format(Locale.US, "%02d:%02d:%02d",
                     s / 3600, (s % 3600) / 60, s % 60));
         } else if (ready && blockedCount == 0) {
-            tvStatus.setText("Choose which apps to block before you start a session.");
+            tvStatus.setText("Choose what to block before you start a session.");
         } else {
             tvStatus.setText("No session running.");
         }
@@ -190,7 +190,7 @@ public class MainActivity extends Activity {
 
     private void onStartClicked() {
         if (BlocklistStore.count(this) == 0) {
-            Toast.makeText(this, "Choose at least one app to block first", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Choose at least one app or website to block first", Toast.LENGTH_SHORT).show();
             return;
         }
         float parsed;

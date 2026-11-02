@@ -18,11 +18,21 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 public class BlockerAccessibilityService extends AccessibilityService {
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private View overlay;
     private long lastOverlayAt = 0L;
+
+    // Browsers installed on the phone (refreshed once a minute), and a debounce for URL checks
+    private Set<String> browsers = Collections.emptySet();
+    private long browsersAt = -1L;
+    private boolean siteCheckPending = false;
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -38,7 +48,74 @@ public class BlockerAccessibilityService extends AccessibilityService {
             }
         } else if (Config.SETTINGS_PACKAGES.contains(pkg) && settingsShowsUs()) {
             block("Settings locked", "You can't change Focus Buddy's settings during a session.");
+        } else if (BlocklistStore.hasBlockedSites(this) && isBrowser(pkg)) {
+            scheduleSiteCheck(pkg);
         }
+    }
+
+    private boolean isBrowser(String pkg) {
+        long now = SystemClock.elapsedRealtime();
+        if (browsersAt < 0 || now - browsersAt > 60_000) {
+            browsers = Browsers.packages(getPackageManager());
+            browsersAt = now;
+        }
+        return browsers.contains(pkg);
+    }
+
+    /**
+     * Browsers fire a burst of events while a page loads, so wait a moment and then look once at
+     * where the browser ended up. A burst's last event always gets a check after it.
+     */
+    private void scheduleSiteCheck(final String pkg) {
+        if (siteCheckPending) return;
+        siteCheckPending = true;
+        main.postDelayed(() -> {
+            siteCheckPending = false;
+            if (!SessionStore.isActive(this)) return;
+            String site = blockedSiteOpenIn(pkg);
+            if (site != null) {
+                block(site + " is blocked",
+                        "Focus session in progress. Time to get back to what matters.");
+            }
+        }, 300);
+    }
+
+    /** The blocked website the foreground browser is showing, or null. Reads its address bar. */
+    private String blockedSiteOpenIn(String pkg) {
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null || root.getPackageName() == null
+                || !pkg.equals(root.getPackageName().toString())) {
+            return null;
+        }
+
+        boolean foundAddressBar = false;
+        for (String name : Config.URL_BAR_ID_NAMES) {
+            List<AccessibilityNodeInfo> bars = root.findAccessibilityNodeInfosByViewId(pkg + ":id/" + name);
+            for (AccessibilityNodeInfo bar : bars) {
+                foundAddressBar = true;
+                String hit = BlocklistStore.blockedSiteIn(this, bar.getText());
+                if (hit != null) return hit;
+            }
+        }
+        if (foundAddressBar) return null;
+
+        // Unknown browser: look through (a limited number of) the screen's text fields instead
+        ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>();
+        queue.add(root);
+        int visited = 0;
+        while (!queue.isEmpty() && visited < 200) {
+            AccessibilityNodeInfo node = queue.poll();
+            visited++;
+            if ("android.widget.EditText".contentEquals(node.getClassName() == null ? "" : node.getClassName())) {
+                String hit = BlocklistStore.blockedSiteIn(this, node.getText());
+                if (hit != null) return hit;
+            }
+            for (int i = 0; i < node.getChildCount(); i++) {
+                AccessibilityNodeInfo child = node.getChild(i);
+                if (child != null) queue.add(child);
+            }
+        }
+        return null;
     }
 
     private String foregroundPackage() {

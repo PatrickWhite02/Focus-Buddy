@@ -33,11 +33,11 @@ Once both permissions are enabled, you're ready to go.
 ## Using Focus Buddy
 
 1. Open Focus Buddy.
-2. Tap **Choose apps to block** and switch on every app (social media, YouTube, web browsers...) you want blocked. You have to pick at least one before you can start a session, and the list can't be changed while a session is running.
+2. Tap **Choose what to block** and switch on every app (social media, YouTube, web browsers...) you want blocked. To block a website, tap **Add website** and type its address (like `youtube.com`); it's added to the same list with a toggle, and you can hold a website's row to remove it. You have to pick at least one app or website before you can start a session, and the list can't be changed while a session is running.
 3. Select how many hours you want your blocking session to last (decimals work).
 4. Start the session.
 
-Focus Buddy will block the apps you chose while the session is active.
+Focus Buddy will block the apps you chose while the session is active. For websites, it reads the address bar of the browser in front of you and sends you home if it shows a blocked site (or one of its subdomains). It knows the address bars of Chrome, Brave, Edge, Firefox, Samsung Internet, Opera and DuckDuckGo; for another browser it falls back to scanning the screen's text fields, and you can add its address bar id to `Config.URL_BAR_ID_NAMES`.
 
 ### Ending a Session Early
 

@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/super_frog"
-        android:text="Apps to block"
+        android:text="What to block"
         android:textColor="@color/primary_dark"
         android:textSize="40sp" />
 
@@ -43,10 +43,28 @@
             android:textSize="18sp" />
     </FrameLayout>
 
-    <Button
-        android:id="@+id/btnDone"
-        style="@style/BaseButtonStyle"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="Done" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnAddSite"
+            style="@style/BaseButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:text="Add website" />
+
+        <Button
+            android:id="@+id/btnDone"
+            style="@style/BaseButtonStyle"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:text="Done" />
+    </LinearLayout>
 </LinearLayout>

@@ -1,16 +1,18 @@
 package com.example.FocusBuddy;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Switch;
@@ -25,27 +27,35 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
- * Lists the apps the user has installed (plus web browsers) with a toggle each.
- * Toggling adds/removes the app from the blocklist. Not available during a session.
+ * Lists the websites the user added (top) and the apps they have installed, including web
+ * browsers, with a toggle each. Toggling adds/removes the item from the blocklist.
+ * Not available during a session.
  */
 public class AppPickerActivity extends Activity {
 
-    private static final class AppEntry {
-        final String pkg;
+    /** One row: either an installed app (key = package name) or a website (key = host). */
+    private static final class Entry {
+        final String key;
         final String label;
         final Drawable icon;
+        final boolean website;
 
-        AppEntry(String pkg, String label, Drawable icon) {
-            this.pkg = pkg;
+        Entry(String key, String label, Drawable icon, boolean website) {
+            this.key = key;
             this.label = label;
             this.icon = icon;
+            this.website = website;
         }
     }
 
-    private final List<AppEntry> apps = new ArrayList<>();
-    private final Set<String> blocked = new HashSet<>();
+    private final List<Entry> rows = new ArrayList<>();
+    private final List<Entry> appEntries = new ArrayList<>();
+    private final Set<String> blockedApps = new HashSet<>();
+    private final Set<String> blockedSites = new HashSet<>();
+    private Drawable browserIcon;
     private AppAdapter adapter;
     private TextView tvCount, tvEmpty;
 
@@ -62,38 +72,40 @@ public class AppPickerActivity extends Activity {
 
         adapter = new AppAdapter();
         list.setAdapter(adapter);
-        list.setOnItemClickListener((parent, view, position, id) -> {
-            AppEntry e = apps.get(position);
-            boolean nowBlocked = !blocked.contains(e.pkg);
-            if (nowBlocked) blocked.add(e.pkg); else blocked.remove(e.pkg);
-            BlocklistStore.setBlocked(this, e.pkg, nowBlocked);
-            adapter.notifyDataSetChanged();
-            updateCount();
+        list.setOnItemClickListener((parent, view, position, id) -> toggle(rows.get(position)));
+        list.setOnItemLongClickListener((parent, view, position, id) -> {
+            Entry e = rows.get(position);
+            if (!e.website) return false;
+            confirmRemoveSite(e.key);
+            return true;
         });
 
+        findViewById(R.id.btnAddSite).setOnClickListener(v -> showAddSiteDialog());
         findViewById(R.id.btnDone).setOnClickListener(v -> finish());
 
-        blocked.addAll(BlocklistStore.get(this));
-        updateCount();
+        blockedApps.addAll(BlocklistStore.get(this));
+        blockedSites.addAll(BlocklistStore.blockedSites(this));
+        rebuildRows();
 
         // Loading labels and icons for every app can take a moment, so keep it off the UI thread.
         new Thread(() -> {
-            final List<AppEntry> loaded = loadApps();
+            final List<Entry> loaded = loadApps();
+            final Drawable icon = Browsers.defaultIcon(getPackageManager());
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
-                apps.clear();
-                apps.addAll(loaded);
-                if (apps.isEmpty()) {
+                appEntries.clear();
+                appEntries.addAll(loaded);
+                browserIcon = icon;
+                if (appEntries.isEmpty()) {
                     tvEmpty.setText("No apps found");
                 } else {
                     // Forget blocked apps that were uninstalled, so the count matches what's listed
                     Set<String> visible = new HashSet<>();
-                    for (AppEntry e : apps) visible.add(e.pkg);
+                    for (Entry e : appEntries) visible.add(e.key);
                     BlocklistStore.retainOnly(this, visible);
-                    blocked.retainAll(visible);
+                    blockedApps.retainAll(visible);
                 }
-                adapter.notifyDataSetChanged();
-                updateCount();
+                rebuildRows();
             });
         }).start();
     }
@@ -114,14 +126,88 @@ public class AppPickerActivity extends Activity {
         return false;
     }
 
+    // ---------- List state ----------
+
+    /** Websites first (alphabetical), then the installed apps (already alphabetical). */
+    private void rebuildRows() {
+        rows.clear();
+        for (String host : new TreeSet<>(BlocklistStore.sites(this))) {
+            rows.add(new Entry(host, host, browserIcon, true));
+        }
+        rows.addAll(appEntries);
+        adapter.notifyDataSetChanged();
+        updateCount();
+    }
+
+    private void toggle(Entry e) {
+        if (e.website) {
+            boolean now = !blockedSites.contains(e.key);
+            if (now) blockedSites.add(e.key); else blockedSites.remove(e.key);
+            BlocklistStore.setSiteBlocked(this, e.key, now);
+        } else {
+            boolean now = !blockedApps.contains(e.key);
+            if (now) blockedApps.add(e.key); else blockedApps.remove(e.key);
+            BlocklistStore.setBlocked(this, e.key, now);
+        }
+        adapter.notifyDataSetChanged();
+        updateCount();
+    }
+
     private void updateCount() {
-        int n = blocked.size();
-        tvCount.setText(n == 0 ? "Nothing selected yet" : n + (n == 1 ? " app" : " apps") + " will be blocked");
+        int a = blockedApps.size();
+        int s = blockedSites.size();
+        if (a + s == 0) {
+            tvCount.setText("Nothing selected yet");
+            return;
+        }
+        List<String> parts = new ArrayList<>();
+        if (a > 0) parts.add(a + (a == 1 ? " app" : " apps"));
+        if (s > 0) parts.add(s + (s == 1 ? " website" : " websites"));
+        tvCount.setText(android.text.TextUtils.join(" and ", parts) + " will be blocked");
+    }
+
+    // ---------- Websites ----------
+
+    private void showAddSiteDialog() {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        input.setHint("example.com");
+        input.setSingleLine(true);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Block a website")
+                .setMessage("Browsers will be closed when they open this site (and its subdomains).")
+                .setView(input)
+                .setPositiveButton("Add", (d, which) -> {
+                    String host = BlocklistStore.normalizeHost(input.getText().toString());
+                    if (host == null) {
+                        Toast.makeText(this, "That doesn't look like a website address",
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    BlocklistStore.addSite(this, host);
+                    blockedSites.add(host);
+                    rebuildRows();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void confirmRemoveSite(final String host) {
+        new AlertDialog.Builder(this)
+                .setTitle("Remove " + host + "?")
+                .setPositiveButton("Remove", (d, which) -> {
+                    BlocklistStore.removeSite(this, host);
+                    blockedSites.remove(host);
+                    rebuildRows();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     // ---------- Finding the apps ----------
 
-    private List<AppEntry> loadApps() {
+    private List<Entry> loadApps() {
         PackageManager pm = getPackageManager();
         Map<String, ApplicationInfo> found = new LinkedHashMap<>();
 
@@ -133,10 +219,7 @@ public class AppPickerActivity extends Activity {
         }
 
         // Web browsers, even when they're preinstalled system apps (Chrome, Samsung Internet...)
-        Intent web = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.example.com"))
-                .addCategory(Intent.CATEGORY_BROWSABLE);
-        for (ResolveInfo ri : pm.queryIntentActivities(web, PackageManager.MATCH_ALL)) {
-            ApplicationInfo ai = ri.activityInfo.applicationInfo;
+        for (ApplicationInfo ai : Browsers.apps(pm)) {
             found.put(ai.packageName, ai);
         }
 
@@ -148,13 +231,13 @@ public class AppPickerActivity extends Activity {
             found.remove(ri.activityInfo.packageName);
         }
 
-        List<AppEntry> out = new ArrayList<>();
+        List<Entry> out = new ArrayList<>();
         for (ApplicationInfo ai : found.values()) {
-            out.add(new AppEntry(ai.packageName, ai.loadLabel(pm).toString(), ai.loadIcon(pm)));
+            out.add(new Entry(ai.packageName, ai.loadLabel(pm).toString(), ai.loadIcon(pm), false));
         }
-        Collections.sort(out, new Comparator<AppEntry>() {
+        Collections.sort(out, new Comparator<Entry>() {
             @Override
-            public int compare(AppEntry a, AppEntry b) {
+            public int compare(Entry a, Entry b) {
                 return a.label.compareToIgnoreCase(b.label);
             }
         });
@@ -171,12 +254,12 @@ public class AppPickerActivity extends Activity {
     private final class AppAdapter extends BaseAdapter {
         @Override
         public int getCount() {
-            return apps.size();
+            return rows.size();
         }
 
         @Override
-        public AppEntry getItem(int position) {
-            return apps.get(position);
+        public Entry getItem(int position) {
+            return rows.get(position);
         }
 
         @Override
@@ -189,11 +272,18 @@ public class AppPickerActivity extends Activity {
             View row = convertView != null
                     ? convertView
                     : getLayoutInflater().inflate(R.layout.item_app, parent, false);
-            AppEntry e = apps.get(position);
-            ((ImageView) row.findViewById(R.id.ivIcon)).setImageDrawable(e.icon);
+            Entry e = rows.get(position);
+            ImageView icon = row.findViewById(R.id.ivIcon);
+            if (e.icon != null) {
+                icon.setImageDrawable(e.icon);
+            } else {
+                icon.setImageResource(android.R.drawable.ic_menu_search);
+            }
             ((TextView) row.findViewById(R.id.tvAppName)).setText(e.label);
-            ((TextView) row.findViewById(R.id.tvAppPackage)).setText(e.pkg);
-            ((Switch) row.findViewById(R.id.swBlock)).setChecked(blocked.contains(e.pkg));
+            ((TextView) row.findViewById(R.id.tvAppPackage))
+                    .setText(e.website ? "Website \u00b7 hold to remove" : e.key);
+            ((Switch) row.findViewById(R.id.swBlock)).setChecked(
+                    e.website ? blockedSites.contains(e.key) : blockedApps.contains(e.key));
             return row;
         }
     }

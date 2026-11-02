@@ -36,7 +36,7 @@
         <Button
             android:id="@+id/btnChooseApps"
             style="@style/BaseButtonStyle"
-            android:text="Choose apps to block"
+            android:text="Choose what to block"
             />
 
         <Button
