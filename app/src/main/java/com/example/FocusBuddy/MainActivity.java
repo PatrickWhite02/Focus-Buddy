@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
 
     private TextView tvStatus, tvSetup, tvCountdown;
     private View setupGroup, startGroup, activeGroup;
-    private Button btnAccessibility, btnAdmin, btnChooseApps, btnStart;
+    private Button btnAccessibility, btnAdmin, btnChooseApps, btnSchedule, btnStart;
     private String blockedSummary = "";
     private EditText etHours;
     private ComponentName adminComponent;
@@ -59,6 +59,7 @@ public class MainActivity extends Activity {
         btnAdmin = findViewById(R.id.btnAdmin);
         etHours = findViewById(R.id.etHours);
         btnChooseApps = findViewById(R.id.btnChooseApps);
+        btnSchedule = findViewById(R.id.btnSchedule);
         btnStart = findViewById(R.id.btnStart);
 
         btnAccessibility.setOnClickListener(v -> onEnableAccessibilityClicked());
@@ -72,6 +73,7 @@ public class MainActivity extends Activity {
         });
 
         btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
+        btnSchedule.setOnClickListener(v -> startActivity(new Intent(this, ScheduleActivity.class)));
         btnStart.setOnClickListener(v -> onStartClicked());
         findViewById(R.id.btnScan).setOnClickListener(v -> scanToUnlock());
     }

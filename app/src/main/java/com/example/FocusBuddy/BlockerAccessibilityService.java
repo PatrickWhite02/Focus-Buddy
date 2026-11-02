@@ -34,10 +34,33 @@ public class BlockerAccessibilityService extends AccessibilityService {
     private long browsersAt = -1L;
     private boolean siteCheckPending = false;
 
+    // A scheduled window can open while the user is sitting still in a blocked app (no events),
+    // so also look at the foreground app every few seconds.
+    private final Runnable sessionTick = new Runnable() {
+        @Override
+        public void run() {
+            if (SessionStore.isActive(BlockerAccessibilityService.this)) {
+                String pkg = foregroundPackage();
+                if (pkg != null) handlePackage(pkg);
+            }
+            main.postDelayed(this, 5000);
+        }
+    };
+
+    @Override
+    protected void onServiceConnected() {
+        super.onServiceConnected();
+        main.removeCallbacks(sessionTick);
+        main.postDelayed(sessionTick, 5000);
+    }
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null || event.getPackageName() == null) return;
-        String pkg = event.getPackageName().toString();
+        handlePackage(event.getPackageName().toString());
+    }
+
+    private void handlePackage(String pkg) {
         if (pkg.equals(getPackageName()) || !SessionStore.isActive(this)) return;
 
         if (BlocklistStore.isBlocked(this, pkg)) {
@@ -221,6 +244,7 @@ public class BlockerAccessibilityService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        main.removeCallbacks(sessionTick);
         dismissOverlay();
         super.onDestroy();
     }

@@ -23,8 +23,13 @@ public final class SessionStore {
         prefs(c).edit().putLong(KEY_END, end).commit();
     }
 
+    /** Time left in the manual session or in the open scheduled window, whichever ends later. */
     public static long remainingMs(Context c) {
-        return Math.max(0L, prefs(c).getLong(KEY_END, 0L) - System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        long manual = Math.max(0L, prefs(c).getLong(KEY_END, 0L) - now);
+        long scheduledEnd = ScheduleStore.activeUntil(c, now);
+        long scheduled = scheduledEnd > 0L ? scheduledEnd - now : 0L;
+        return Math.max(manual, scheduled);
     }
 
     public static boolean isActive(Context c) {
@@ -47,6 +52,7 @@ public final class SessionStore {
         if (!match) return false;
 
         prefs(c).edit().remove(KEY_END).commit();
+        ScheduleStore.skipCurrent(c); // also ends a scheduled window that's open right now
         return true;
     }
 

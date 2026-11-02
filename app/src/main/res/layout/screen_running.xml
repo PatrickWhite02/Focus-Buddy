@@ -40,6 +40,12 @@
             />
 
         <Button
+            android:id="@+id/btnSchedule"
+            style="@style/BaseButtonStyle"
+            android:text="Scheduled sessions"
+            />
+
+        <Button
             android:id="@+id/btnStart"
             style="@style/BaseButtonStyle"
             android:text="Start focus session"

@@ -39,11 +39,17 @@ Once both permissions are enabled, you're ready to go.
 
 Focus Buddy will block the apps you chose while the session is active. For websites, it reads the address bar of the browser in front of you and sends you home if it shows a blocked site (or one of its subdomains). It knows the address bars of Chrome, Brave, Edge, Firefox, Samsung Internet, Opera and DuckDuckGo; for another browser it falls back to scanning the screen's text fields, and you can add its address bar id to `Config.URL_BAR_ID_NAMES`.
 
+### Scheduled sessions
+
+For sessions that start by themselves, tap **Scheduled sessions**. Each day of the week has a **+**: tap it, pick a start time and an end time, and that window shows up under the day (an end time earlier than the start runs past midnight). Add as many windows to a day as you like, and tap the trash can next to one to remove it.
+
+Whenever the clock is inside a window, a session is running, with the same blocking and the same locked settings as a manual session, and nothing has to be opened or started. Like the app list, the schedule can't be edited while a session is running.
+
 ### Ending a Session Early
 
 Want to end your session before the timer expires?
 
-Scan the QR code using either Focus Buddy's built-in camera or your phone's default camera.
+Scan the QR code using either Focus Buddy's built-in camera or your phone's default camera. This also ends a scheduled window that's currently open; later windows still start on time.
 
 ## How Focus Buddy Prevents Distractions
 

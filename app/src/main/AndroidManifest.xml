@@ -43,6 +43,10 @@
             android:name=".AppPickerActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ScheduleActivity"
+            android:exported="false" />
+
         <!-- The printed QR code encodes focusbuddy://unlock?token=... and lands here -->
         <activity
             android:name=".UnlockActivity"

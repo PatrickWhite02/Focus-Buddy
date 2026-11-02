@@ -140,6 +140,7 @@ public class AppPickerActivity extends Activity {
     }
 
     private void toggle(Entry e) {
+        if (leaveIfSessionActive()) return;
         if (e.website) {
             boolean now = !blockedSites.contains(e.key);
             if (now) blockedSites.add(e.key); else blockedSites.remove(e.key);
@@ -169,6 +170,7 @@ public class AppPickerActivity extends Activity {
     // ---------- Websites ----------
 
     private void showAddSiteDialog() {
+        if (leaveIfSessionActive()) return;
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         input.setHint("example.com");
@@ -179,6 +181,7 @@ public class AppPickerActivity extends Activity {
                 .setMessage("Browsers will be closed when they open this site (and its subdomains).")
                 .setView(input)
                 .setPositiveButton("Add", (d, which) -> {
+                    if (leaveIfSessionActive()) return;
                     String host = BlocklistStore.normalizeHost(input.getText().toString());
                     if (host == null) {
                         Toast.makeText(this, "That doesn't look like a website address",
@@ -194,9 +197,11 @@ public class AppPickerActivity extends Activity {
     }
 
     private void confirmRemoveSite(final String host) {
+        if (leaveIfSessionActive()) return;
         new AlertDialog.Builder(this)
                 .setTitle("Remove " + host + "?")
                 .setPositiveButton("Remove", (d, which) -> {
+                    if (leaveIfSessionActive()) return;
                     BlocklistStore.removeSite(this, host);
                     blockedSites.remove(host);
                     rebuildRows();
