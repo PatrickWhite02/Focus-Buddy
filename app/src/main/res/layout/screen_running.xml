@@ -34,6 +34,12 @@
         </LinearLayout>
 
         <Button
+            android:id="@+id/btnChooseApps"
+            style="@style/BaseButtonStyle"
+            android:text="Choose apps to block"
+            />
+
+        <Button
             android:id="@+id/btnStart"
             style="@style/BaseButtonStyle"
             android:text="Start focus session"

@@ -33,15 +33,11 @@ Once both permissions are enabled, you're ready to go.
 ## Using Focus Buddy
 
 1. Open Focus Buddy.
-2. Select how many hours you want your blocking session to last (decimals work).
-3. Start the session.
+2. Tap **Choose apps to block** and switch on every app (social media, YouTube, web browsers...) you want blocked. You have to pick at least one before you can start a session, and the list can't be changed while a session is running.
+3. Select how many hours you want your blocking session to last (decimals work).
+4. Start the session.
 
-Focus Buddy will block access to social media apps while the session is active. The current supported apps are:
-1. Facebook/Lite
-2. Youtube
-3. Instagram
-
-Adding more is easy, just edit Config.java
+Focus Buddy will block the apps you chose while the session is active.
 
 ### Ending a Session Early
 

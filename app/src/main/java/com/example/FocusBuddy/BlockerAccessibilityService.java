@@ -30,11 +30,10 @@ public class BlockerAccessibilityService extends AccessibilityService {
         String pkg = event.getPackageName().toString();
         if (pkg.equals(getPackageName()) || !SessionStore.isActive(this)) return;
 
-        String appName = Config.BLOCKED_APPS.get(pkg);
-        if (appName != null) {
+        if (BlocklistStore.isBlocked(this, pkg)) {
             // Only act if it's really the foreground window (ignores ghost events while animating out)
             if (pkg.equals(foregroundPackage())) {
-                block(appName + " is blocked",
+                block(BlocklistStore.labelFor(this, pkg) + " is blocked",
                         "Focus session in progress. Time to get back to what matters.");
             }
         } else if (Config.SETTINGS_PACKAGES.contains(pkg) && settingsShowsUs()) {

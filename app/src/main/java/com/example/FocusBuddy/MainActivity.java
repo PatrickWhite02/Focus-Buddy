@@ -37,7 +37,8 @@ public class MainActivity extends Activity {
 
     private TextView tvStatus, tvSetup, tvCountdown;
     private View setupGroup, startGroup, activeGroup;
-    private Button btnAccessibility, btnAdmin;
+    private Button btnAccessibility, btnAdmin, btnChooseApps, btnStart;
+    private String blockedSummary = "";
     private EditText etHours;
     private ComponentName adminComponent;
 
@@ -57,6 +58,8 @@ public class MainActivity extends Activity {
         btnAccessibility = findViewById(R.id.btnAccessibility);
         btnAdmin = findViewById(R.id.btnAdmin);
         etHours = findViewById(R.id.etHours);
+        btnChooseApps = findViewById(R.id.btnChooseApps);
+        btnStart = findViewById(R.id.btnStart);
 
         btnAccessibility.setOnClickListener(v -> onEnableAccessibilityClicked());
 
@@ -68,13 +71,16 @@ public class MainActivity extends Activity {
             startActivity(i);
         });
 
-        findViewById(R.id.btnStart).setOnClickListener(v -> onStartClicked());
+        btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
+        btnStart.setOnClickListener(v -> onStartClicked());
         findViewById(R.id.btnScan).setOnClickListener(v -> scanToUnlock());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        // The blocklist can't change during a session, so this only needs refreshing here
+        blockedSummary = TextUtils.join(", ", BlocklistStore.labels(this));
         ui.post(tick);
     }
 
@@ -91,6 +97,7 @@ public class MainActivity extends Activity {
         boolean a11y = accessibilityEnabled();
         boolean admin = adminActive();
         boolean ready = a11y && admin;
+        int blockedCount = BlocklistStore.count(this);
 
         setupGroup.setVisibility(!active && !ready ? View.VISIBLE : View.GONE);
         startGroup.setVisibility(!active && ready ? View.VISIBLE : View.GONE);
@@ -98,15 +105,22 @@ public class MainActivity extends Activity {
 
         btnAccessibility.setEnabled(!a11y);
         btnAdmin.setEnabled(!admin);
+        btnChooseApps.setText(blockedCount == 0
+                ? "Choose apps to block"
+                : "Choose apps to block (" + blockedCount + " selected)");
+        // The session can't start until at least one app is chosen
+        btnStart.setEnabled(blockedCount > 0);
+        btnStart.setAlpha(blockedCount > 0 ? 1f : 0.5f);
         tvSetup.setText("Accessibility service: " + (a11y ? "on ✓" : "off")
                 + "\nDevice admin: " + (admin ? "active ✓" : "inactive"));
 
         if (active) {
-            tvStatus.setText("Session active. Blocked: "
-                    + TextUtils.join(", ", Config.BLOCKED_APPS.values()));
+            tvStatus.setText("Session active. Blocked: " + blockedSummary);
             long s = SessionStore.remainingMs(this) / 1000;
             tvCountdown.setText(String.format(Locale.US, "%02d:%02d:%02d",
                     s / 3600, (s % 3600) / 60, s % 60));
+        } else if (ready && blockedCount == 0) {
+            tvStatus.setText("Choose which apps to block before you start a session.");
         } else {
             tvStatus.setText("No session running.");
         }
@@ -175,6 +189,10 @@ public class MainActivity extends Activity {
     // ---------- Starting a session ----------
 
     private void onStartClicked() {
+        if (BlocklistStore.count(this) == 0) {
+            Toast.makeText(this, "Choose at least one app to block first", Toast.LENGTH_SHORT).show();
+            return;
+        }
         float parsed;
         try {
             parsed = Float.parseFloat(etHours.getText().toString().trim());
