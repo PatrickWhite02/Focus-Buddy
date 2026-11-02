@@ -1,6 +1,11 @@
 package com.example.FocusBuddy;
 
 import android.accessibilityservice.AccessibilityService;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
@@ -34,24 +39,46 @@ public class BlockerAccessibilityService extends AccessibilityService {
     private long browsersAt = -1L;
     private boolean siteCheckPending = false;
 
-    // A scheduled window can open while the user is sitting still in a blocked app (no events),
-    // so also look at the foreground app every few seconds.
-    private final Runnable sessionTick = new Runnable() {
+    // No polling. A scheduled window can open while the user is sitting still in a blocked app (so
+    // no accessibility events), so one timer is set for the moment the next window opens. When it
+    // fires, it looks once at what's on screen, then sets itself for the window after that.
+    private final Runnable windowOpened = new Runnable() {
         @Override
         public void run() {
             if (SessionStore.isActive(BlockerAccessibilityService.this)) {
                 String pkg = foregroundPackage();
                 if (pkg != null) handlePackage(pkg);
             }
-            main.postDelayed(this, 5000);
+            armNextWindowTimer();
         }
     };
+
+    // Handler timers don't count time the phone spends asleep, so re-arm from the real clock
+    // whenever the screen turns on, and whenever the schedule is edited.
+    private final BroadcastReceiver screenOn = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            armNextWindowTimer();
+        }
+    };
+    private final SharedPreferences.OnSharedPreferenceChangeListener scheduleChanged =
+            (prefs, key) -> armNextWindowTimer();
+
+    private void armNextWindowTimer() {
+        main.removeCallbacks(windowOpened);
+        long now = System.currentTimeMillis();
+        long next = ScheduleStore.nextStartAfter(this, now);
+        if (next > 0L) {
+            main.postDelayed(windowOpened, next - now + 1000); // +1s so the window is definitely open
+        }
+    }
 
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
-        main.removeCallbacks(sessionTick);
-        main.postDelayed(sessionTick, 5000);
+        registerReceiver(screenOn, new IntentFilter(Intent.ACTION_SCREEN_ON));
+        ScheduleStore.listen(this, scheduleChanged);
+        armNextWindowTimer();
     }
 
     @Override
@@ -244,7 +271,13 @@ public class BlockerAccessibilityService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
-        main.removeCallbacks(sessionTick);
+        main.removeCallbacks(windowOpened);
+        ScheduleStore.stopListening(this, scheduleChanged);
+        try {
+            unregisterReceiver(screenOn);
+        } catch (IllegalArgumentException ignored) {
+            // wasn't registered
+        }
         dismissOverlay();
         super.onDestroy();
     }

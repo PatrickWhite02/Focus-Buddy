@@ -135,6 +135,43 @@ public final class ScheduleStore {
         return (now >= s && now < e && e > skipUntil) ? e : 0L;
     }
 
+    /** When the next window opens after {@code now} (ms), or 0 if nothing is scheduled. */
+    public static long nextStartAfter(Context c, long now) {
+        Set<String> all = raw(c);
+        if (all.isEmpty()) return 0L;
+
+        long best = 0L;
+        for (String s : all) {
+            Window w = Window.decode(s);
+            if (w == null) continue;
+            for (int ahead = 0; ahead <= 7; ahead++) { // 7 = the same weekday next week
+                Calendar cal = Calendar.getInstance();
+                cal.setTimeInMillis(now);
+                cal.add(Calendar.DAY_OF_YEAR, ahead);
+                if (cal.get(Calendar.DAY_OF_WEEK) != w.day) continue;
+                cal.set(Calendar.HOUR_OF_DAY, w.startMin / 60);
+                cal.set(Calendar.MINUTE, w.startMin % 60);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                long t = cal.getTimeInMillis();
+                if (t > now) {
+                    if (best == 0L || t < best) best = t;
+                    break;
+                }
+            }
+        }
+        return best;
+    }
+
+    /** Lets the service re-arm its timer when the schedule changes. Keep a strong reference to the listener. */
+    public static void listen(Context c, SharedPreferences.OnSharedPreferenceChangeListener l) {
+        prefs(c).registerOnSharedPreferenceChangeListener(l);
+    }
+
+    public static void stopListening(Context c, SharedPreferences.OnSharedPreferenceChangeListener l) {
+        prefs(c).unregisterOnSharedPreferenceChangeListener(l);
+    }
+
     /** Ends whatever scheduled window is open right now (used by the unlock QR code). Later windows still run. */
     public static void skipCurrent(Context c) {
         long until = activeUntil(c, System.currentTimeMillis());
