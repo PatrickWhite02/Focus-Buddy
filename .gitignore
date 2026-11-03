@@ -1,3 +1,5 @@
 /local.properties
 /.idea/
 /tools/make_qr.py
+.gradle/
+**/build/
