@@ -20,7 +20,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.moduleinstall.ModuleInstall;
+import com.google.android.gms.common.moduleinstall.ModuleInstallClient;
+import com.google.android.gms.common.moduleinstall.ModuleInstallRequest;
 import com.google.mlkit.vision.barcode.common.Barcode;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
@@ -277,15 +281,50 @@ public class MainActivity extends Activity {
         GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
                 .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
                 .build();
-        GmsBarcodeScanning.getClient(this, options).startScan()
+        GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(this, options);
+
+        // The scanner UI lives in a Google Play services module that may not be on the phone yet.
+        // Make sure it is there (downloading it once if needed) before trying to open it.
+        ModuleInstallClient installer = ModuleInstall.getClient(this);
+        installer.areModulesAvailable(scanner)
+                .addOnSuccessListener(result -> {
+                    if (result.areModulesAvailable()) {
+                        launchScanner(scanner);
+                    } else {
+                        Toast.makeText(this, "Downloading the scanner (one time only)...",
+                                Toast.LENGTH_LONG).show();
+                        installer.installModules(ModuleInstallRequest.newBuilder().addApi(scanner).build())
+                                .addOnSuccessListener(r -> launchScanner(scanner))
+                                .addOnFailureListener(this::scannerUnavailable);
+                    }
+                })
+                .addOnFailureListener(this::scannerUnavailable);
+    }
+
+    private void launchScanner(GmsBarcodeScanner scanner) {
+        scanner.startScan()
                 .addOnSuccessListener(barcode -> {
                     boolean ok = SessionStore.unlockFromLink(this, barcode.getRawValue());
                     Toast.makeText(this, ok ? "Session ended" : "Wrong QR code",
                             Toast.LENGTH_LONG).show();
                     render();
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Scan failed: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show());
+                .addOnFailureListener(this::scannerUnavailable);
+    }
+
+    /** Shows why the built-in scanner could not open, and offers the phone camera app instead. */
+    private void scannerUnavailable(Exception e) {
+        new AlertDialog.Builder(this)
+                .setTitle("Couldn't open the built-in scanner")
+                .setMessage(e.getMessage() + "\n\nYou can scan the QR code with your phone camera app instead.")
+                .setPositiveButton("Open camera", (d, w) -> {
+                    try {
+                        startActivity(new Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA));
+                    } catch (ActivityNotFoundException ex) {
+                        Toast.makeText(this, "No camera app found", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }
