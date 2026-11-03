@@ -16,7 +16,7 @@ public class UnlockActivity extends Activity {
 
         if (ok) {
             Intent open = new Intent(this, MainActivity.class);
-            open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(open);
         }
         finish();
