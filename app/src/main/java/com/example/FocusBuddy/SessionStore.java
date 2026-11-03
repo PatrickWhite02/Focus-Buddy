@@ -11,6 +11,7 @@ import java.security.MessageDigest;
 public final class SessionStore {
     private static final String PREFS = "focus_session";
     private static final String KEY_END = "end_time";
+    private static final String KEY_UNTIL_SCAN = "until_scan"; // no timer: lasts until the QR code is scanned
 
     private SessionStore() {}
 
@@ -21,6 +22,15 @@ public final class SessionStore {
     public static void start(Context c, float hours) {
         long end = System.currentTimeMillis() + (long) (hours * 3_600_000f);
         prefs(c).edit().putLong(KEY_END, end).commit();
+    }
+
+    /** Starts a block with no end time. Only scanning the unlock QR code ends it. */
+    public static void startUntilScan(Context c) {
+        prefs(c).edit().putBoolean(KEY_UNTIL_SCAN, true).commit();
+    }
+
+    public static boolean isUntilScan(Context c) {
+        return prefs(c).getBoolean(KEY_UNTIL_SCAN, false);
     }
 
     /** Time left in the manual session or in the open scheduled window, whichever ends later. */
@@ -51,7 +61,7 @@ public final class SessionStore {
     }
 
     public static boolean isActive(Context c) {
-        return remainingMs(c) > 0;
+        return isUntilScan(c) || remainingMs(c) > 0;
     }
 
     /** Accepts focusbuddy://unlock?token=... and ends the session if the token matches the hardcoded one. */
@@ -69,7 +79,7 @@ public final class SessionStore {
                 Config.UNLOCK_TOKEN.getBytes(StandardCharsets.UTF_8));
         if (!match) return false;
 
-        prefs(c).edit().remove(KEY_END).commit();
+        prefs(c).edit().remove(KEY_END).remove(KEY_UNTIL_SCAN).commit();
         ScheduleStore.skipCurrent(c); // also ends a scheduled window that's open right now
         return true;
     }

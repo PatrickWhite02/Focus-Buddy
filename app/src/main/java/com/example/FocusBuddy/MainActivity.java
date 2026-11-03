@@ -41,7 +41,7 @@ public class MainActivity extends Activity {
 
     private TextView tvStatus, tvSetup, tvCountdown;
     private View setupGroup, startGroup, activeGroup;
-    private Button btnAccessibility, btnAdmin, btnChooseApps, btnSchedule, btnStart;
+    private Button btnAccessibility, btnAdmin, btnChooseApps, btnSchedule, btnStart, btnUntilScan;
     private String blockedSummary = "";
     private EditText etHours;
     private ComponentName adminComponent;
@@ -65,6 +65,7 @@ public class MainActivity extends Activity {
         btnChooseApps = findViewById(R.id.btnChooseApps);
         btnSchedule = findViewById(R.id.btnSchedule);
         btnStart = findViewById(R.id.btnStart);
+        btnUntilScan = findViewById(R.id.btnUntilScan);
 
         btnAccessibility.setOnClickListener(v -> onEnableAccessibilityClicked());
 
@@ -79,6 +80,7 @@ public class MainActivity extends Activity {
         btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
         btnSchedule.setOnClickListener(v -> startActivity(new Intent(this, ScheduleActivity.class)));
         btnStart.setOnClickListener(v -> onStartClicked());
+        btnUntilScan.setOnClickListener(v -> onUntilScanClicked());
         findViewById(R.id.btnScan).setOnClickListener(v -> scanToUnlock());
     }
 
@@ -117,13 +119,19 @@ public class MainActivity extends Activity {
         // The session can't start until at least one app is chosen
         btnStart.setEnabled(blockedCount > 0);
         btnStart.setAlpha(blockedCount > 0 ? 1f : 0.5f);
+        btnUntilScan.setEnabled(blockedCount > 0);
+        btnUntilScan.setAlpha(blockedCount > 0 ? 1f : 0.5f);
         tvSetup.setText("Accessibility service: " + (a11y ? "on ✓" : "off")
                 + "\nDevice admin: " + (admin ? "active ✓" : "inactive"));
 
         if (active) {
             tvStatus.setText("Session active. Blocked: " + blockedSummary);
             long release = SessionStore.scheduledReleaseMs(this);
-            if (release > 0L) {
+            if (SessionStore.isUntilScan(this)) {
+                // No timer: say how it ends instead of counting down
+                tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f);
+                tvCountdown.setText("Blocked until you scan the QR code");
+            } else if (release > 0L) {
                 // Scheduled block: say when it lifts rather than counting down
                 tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f);
                 tvCountdown.setText("Blocked until\n" + formatRelease(release));
@@ -238,6 +246,24 @@ public class MainActivity extends Activity {
                                 + "is to scan the unlock QR code.", hours))
                 .setPositiveButton("Start", (d, w) -> {
                     SessionStore.start(this, hours);
+                    render();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void onUntilScanClicked() {
+        if (BlocklistStore.count(this) == 0) {
+            Toast.makeText(this, "Choose at least one app or website to block first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Block until you scan the QR code?")
+                .setMessage("This starts a block with no timer. Your blocked apps and websites stay "
+                        + "blocked until you scan the unlock QR code, so make sure you can get to "
+                        + "it first.")
+                .setPositiveButton("Start block", (d, w) -> {
+                    SessionStore.startUntilScan(this);
                     render();
                 })
                 .setNegativeButton("Cancel", null)
