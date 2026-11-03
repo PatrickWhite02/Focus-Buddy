@@ -6,11 +6,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.format.DateFormat;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 /** Screen 2: the options (what to block, schedule, start a session). Only shown when ready and idle. */
@@ -26,7 +30,7 @@ public class MainActivity extends Activity {
         }
     };
 
-    private TextView tvStatus;
+    private TextView tvStatus, tvNextBlock;
     private Button btnChooseApps, btnSchedule, btnStart, btnUntilScan;
     private EditText etHours;
 
@@ -36,6 +40,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         tvStatus = findViewById(R.id.tvStatus);
+        tvNextBlock = findViewById(R.id.tvNextBlock);
         etHours = findViewById(R.id.etHours);
         btnChooseApps = findViewById(R.id.btnChooseApps);
         btnSchedule = findViewById(R.id.btnSchedule);
@@ -91,6 +96,26 @@ public class MainActivity extends Activity {
         tvStatus.setText(blockedCount == 0
                 ? "Choose what to block before you start a session."
                 : "No session running.");
+
+        long next = ScheduleStore.nextStartAfter(this, System.currentTimeMillis());
+        if (next > 0L) {
+            tvNextBlock.setText("Next scheduled block: " + formatStart(next));
+            tvNextBlock.setVisibility(View.VISIBLE);
+        } else {
+            tvNextBlock.setVisibility(View.GONE);
+        }
+    }
+
+    /** "2:00 PM" if it's today, otherwise with the weekday ("Tue 2:00 PM"). */
+    private String formatStart(long startMs) {
+        Date start = new Date(startMs);
+        String time = DateFormat.getTimeFormat(this).format(start);
+        Calendar now = Calendar.getInstance();
+        Calendar then = Calendar.getInstance();
+        then.setTime(start);
+        boolean today = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
+                && now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR);
+        return today ? time : DateFormat.format("EEE", start) + " " + time;
     }
 
     // ---------- Starting a session ----------
