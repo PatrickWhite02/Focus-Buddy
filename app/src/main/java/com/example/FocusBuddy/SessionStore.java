@@ -32,6 +32,24 @@ public final class SessionStore {
         return Math.max(manual, scheduled);
     }
 
+    /**
+     * If the current session is a scheduled one (a scheduled window lasts at least as long as any
+     * manual session), the time (ms) the block releases, counting windows that run back to back;
+     * otherwise 0. Lets the UI say "Blocked until 12:00 PM" instead of showing a countdown.
+     */
+    public static long scheduledReleaseMs(Context c) {
+        long now = System.currentTimeMillis();
+        long release = ScheduleStore.activeUntil(c, now);
+        if (release <= now) return 0L;
+        // A window that starts exactly when this one ends keeps the block going
+        for (int i = 0; i < 50; i++) {
+            long next = ScheduleStore.activeUntil(c, release);
+            if (next <= release) break;
+            release = next;
+        }
+        return release >= prefs(c).getLong(KEY_END, 0L) ? release : 0L;
+    }
+
     public static boolean isActive(Context c) {
         return remainingMs(c) > 0;
     }

@@ -43,7 +43,7 @@ Focus Buddy will block the apps you chose while the session is active. For websi
 
 For sessions that start by themselves, tap **Scheduled sessions**. Each day of the week has a **+**: tap it, pick a start time and an end time, and that window shows up under the day (an end time earlier than the start runs past midnight). Add as many windows to a day as you like, and tap the trash can next to one to remove it.
 
-Whenever the clock is inside a window, a session is running, with the same blocking and the same locked settings as a manual session, and nothing has to be opened or started. Like the app list, the schedule can't be edited while a session is running.
+Whenever the clock is inside a window, a session is running, with the same blocking and the same locked settings as a manual session, and nothing has to be opened or started. While a scheduled window is running, the main screen shows "Blocked until 12:00 PM" where a manual session would show its countdown. Like the app list, the schedule can't be edited while a session is running.
 
 ### Ending a Session Early
 

@@ -12,6 +12,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.text.format.DateFormat;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,6 +24,8 @@ import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
@@ -118,14 +122,34 @@ public class MainActivity extends Activity {
 
         if (active) {
             tvStatus.setText("Session active. Blocked: " + blockedSummary);
-            long s = SessionStore.remainingMs(this) / 1000;
-            tvCountdown.setText(String.format(Locale.US, "%02d:%02d:%02d",
-                    s / 3600, (s % 3600) / 60, s % 60));
+            long release = SessionStore.scheduledReleaseMs(this);
+            if (release > 0L) {
+                // Scheduled block: say when it lifts rather than counting down
+                tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f);
+                tvCountdown.setText("Blocked until\n" + formatRelease(release));
+            } else {
+                tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 48f);
+                long s = SessionStore.remainingMs(this) / 1000;
+                tvCountdown.setText(String.format(Locale.US, "%02d:%02d:%02d",
+                        s / 3600, (s % 3600) / 60, s % 60));
+            }
         } else if (ready && blockedCount == 0) {
             tvStatus.setText("Choose what to block before you start a session.");
         } else {
             tvStatus.setText("No session running.");
         }
+    }
+
+    /** "12:00 PM" if it's today, otherwise with the weekday ("Tue 2:00 AM"). */
+    private String formatRelease(long releaseMs) {
+        Date release = new Date(releaseMs);
+        String time = DateFormat.getTimeFormat(this).format(release);
+        Calendar now = Calendar.getInstance();
+        Calendar then = Calendar.getInstance();
+        then.setTime(release);
+        boolean today = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
+                && now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR);
+        return today ? time : DateFormat.format("EEE", release) + " " + time;
     }
 
     private boolean accessibilityEnabled() {
