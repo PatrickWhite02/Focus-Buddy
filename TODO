@@ -1,10 +1,7 @@
 TEST IMPLEMENTED FEATURES:
-todo: test all new features
-todo: fix the camera
-todo: split the activities properly
-todo: add an indicator for upcoming scheduled sessions
 
 NEW FEATURES:
-todo: improve the main running screen activity
-todo: add a "block until" button
+todo: improve the UI
+    Generally less cluttered
+    Make the app loading screen appear when a website is set up already
 todo: add some form of support for letting the user close the tab with the targeted website, before just killing it (countdown?)
