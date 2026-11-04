@@ -22,6 +22,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -38,6 +39,40 @@ public class BlockerAccessibilityService extends AccessibilityService {
     private Set<String> browsers = Collections.emptySet();
     private long browsersAt = -1L;
     private boolean siteCheckPending = false;
+
+    // Visiting a blocked website doesn't close the browser straight away: the user gets a grace
+    // period to close the tab themselves. While it runs, a toast counts down.
+    private static final long GRACE_MS = 10_000L;
+    private static final long TOAST_EVERY_MS = 3_000L;
+    private static final Set<String> TRANSIENT_WINDOWS =
+            new java.util.HashSet<>(java.util.Arrays.asList("com.android.systemui", "android"));
+    private boolean graceActive = false;
+    private boolean leftBrowserCheckPending = false;
+    private String gracePkg;    // the browser the warning is about
+    private String graceSite;   // the blocked website that triggered it
+    private long graceEndsAt;   // elapsedRealtime
+    private Toast graceToast;
+
+    private final Runnable graceTick = new Runnable() {
+        @Override
+        public void run() {
+            if (!graceActive) return;
+            if (!SessionStore.isActive(BlockerAccessibilityService.this)) {
+                cancelGrace();
+                return;
+            }
+            long left = graceEndsAt - SystemClock.elapsedRealtime();
+            if (left <= 0) {
+                endGrace();
+                return;
+            }
+            if (left >= 2000) {
+                showGraceToast(graceSite + " is blocked. Close the tab within "
+                        + ((left + 999) / 1000) + " seconds.");
+            }
+            main.postDelayed(this, Math.min(left, TOAST_EVERY_MS));
+        }
+    };
 
     // No polling. A scheduled window can open while the user is sitting still in a blocked app (so
     // no accessibility events), so one timer is set for the moment the next window opens. When it
@@ -84,7 +119,12 @@ public class BlockerAccessibilityService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null || event.getPackageName() == null) return;
-        handlePackage(event.getPackageName().toString());
+        String pkg = event.getPackageName().toString();
+        if (graceActive && !pkg.equals(gracePkg)
+                && event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            scheduleLeftBrowserCheck();
+        }
+        handlePackage(pkg);
     }
 
     private void handlePackage(String pkg) {
@@ -122,34 +162,113 @@ public class BlockerAccessibilityService extends AccessibilityService {
         main.postDelayed(() -> {
             siteCheckPending = false;
             if (!SessionStore.isActive(this)) return;
-            String site = blockedSiteOpenIn(pkg);
-            if (site != null) {
-                block(site + " is blocked",
-                        "Focus session in progress. Time to get back to what matters.");
+            SiteReading reading = readSite(pkg);
+            if (!reading.inBrowser) return;
+            if (reading.blockedSite != null) {
+                // Already counting down for this browser? Let that timer run, don't restart it.
+                if (!graceActive || !pkg.equals(gracePkg)) startGrace(pkg, reading.blockedSite);
+            } else if (graceActive && pkg.equals(gracePkg) && reading.otherUrl) {
+                // The address bar changed to a different website: they've moved on, so the
+                // countdown is dropped. Coming back to the blocked site later starts a new one.
+                cancelGrace();
             }
         }, 300);
     }
 
-    /** The blocked website the foreground browser is showing, or null. Reads its address bar. */
-    private String blockedSiteOpenIn(String pkg) {
-        AccessibilityNodeInfo root = getRootInActiveWindow();
-        if (root == null || root.getPackageName() == null
-                || !pkg.equals(root.getPackageName().toString())) {
-            return null;
+    // ---------- Grace period for blocked websites ----------
+
+    private void startGrace(String pkg, String site) {
+        graceActive = true;
+        gracePkg = pkg;
+        graceSite = site;
+        graceEndsAt = SystemClock.elapsedRealtime() + GRACE_MS;
+        main.removeCallbacks(graceTick);
+        graceTick.run();
+    }
+
+    private void cancelGrace() {
+        graceActive = false;
+        main.removeCallbacks(graceTick);
+        if (graceToast != null) {
+            graceToast.cancel();
+            graceToast = null;
         }
+    }
+
+    private void showGraceToast(String text) {
+        if (graceToast != null) graceToast.cancel();
+        graceToast = Toast.makeText(this, text, Toast.LENGTH_LONG);
+        graceToast.show();
+    }
+
+    /**
+     * The grace period is over without the user having moved on, so the tab is closed (they are
+     * sent home). Nothing is re-read here: being unable to see the address bar is not a reason to
+     * assume they left the site. Leaving the site or the browser cancels the grace period when it
+     * happens (see scheduleSiteCheck and scheduleLeftBrowserCheck).
+     */
+    private void endGrace() {
+        String site = graceSite;
+        cancelGrace();
+        if (!SessionStore.isActive(this)) return;
+        block(site + " is blocked",
+                "Focus session in progress. Time to get back to what matters.");
+    }
+
+    /** Another app's window came to the front: if the browser really is gone, drop the grace period. */
+    private void scheduleLeftBrowserCheck() {
+        if (leftBrowserCheckPending) return;
+        leftBrowserCheckPending = true;
+        main.postDelayed(() -> {
+            leftBrowserCheckPending = false;
+            if (!graceActive) return;
+            String front = foregroundPackage();
+            // Brief system windows (notification shade, system dialogs) aren't leaving the browser
+            if (front != null && !front.equals(gracePkg) && !TRANSIENT_WINDOWS.contains(front)) {
+                cancelGrace();
+            }
+        }, 300);
+    }
+
+    // ---------- Reading the browser ----------
+
+    /** What a look at the screen showed about the browser. */
+    private static final class SiteReading {
+        boolean inBrowser;     // the browser is the foreground window
+        String blockedSite;    // a blocked website shown in the address bar, or null
+        boolean otherUrl;      // the address bar shows a website that is NOT blocked
+    }
+
+    private SiteReading readSite(String pkg) {
+        SiteReading r = new SiteReading();
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null || root.getPackageName() == null) return r;
+        if (!pkg.equals(root.getPackageName().toString())) return r;
+        r.inBrowser = true;
 
         boolean foundAddressBar = false;
         for (String name : Config.URL_BAR_ID_NAMES) {
             List<AccessibilityNodeInfo> bars = root.findAccessibilityNodeInfosByViewId(pkg + ":id/" + name);
             for (AccessibilityNodeInfo bar : bars) {
                 foundAddressBar = true;
-                String hit = BlocklistStore.blockedSiteIn(this, bar.getText());
-                if (hit != null) return hit;
+                CharSequence text = bar.getText();
+                String hit = BlocklistStore.blockedSiteIn(this, text);
+                if (hit != null) {
+                    r.blockedSite = hit;
+                    return r;
+                }
+                // Only a website in a bar the user isn't typing in counts: text being typed (or a
+                // hint like "Search or type web address") hasn't taken them anywhere.
+                if (!bar.isFocused() && text != null
+                        && BlocklistStore.normalizeHost(text.toString()) != null) {
+                    r.otherUrl = true;
+                }
             }
         }
-        if (foundAddressBar) return null;
+        if (foundAddressBar) return r;
 
-        // Unknown browser: look through (a limited number of) the screen's text fields instead
+        // Unknown browser: look through (a limited number of) the screen's text fields instead.
+        // These could be fields on the web page itself, so they can only ever confirm a blocked site.
         ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>();
         queue.add(root);
         int visited = 0;
@@ -158,14 +277,17 @@ public class BlockerAccessibilityService extends AccessibilityService {
             visited++;
             if ("android.widget.EditText".contentEquals(node.getClassName() == null ? "" : node.getClassName())) {
                 String hit = BlocklistStore.blockedSiteIn(this, node.getText());
-                if (hit != null) return hit;
+                if (hit != null) {
+                    r.blockedSite = hit;
+                    return r;
+                }
             }
             for (int i = 0; i < node.getChildCount(); i++) {
                 AccessibilityNodeInfo child = node.getChild(i);
                 if (child != null) queue.add(child);
             }
         }
-        return null;
+        return r;
     }
 
     private String foregroundPackage() {
@@ -272,6 +394,7 @@ public class BlockerAccessibilityService extends AccessibilityService {
     @Override
     public void onDestroy() {
         main.removeCallbacks(windowOpened);
+        cancelGrace();
         ScheduleStore.stopListening(this, scheduleChanged);
         try {
             unregisterReceiver(screenOn);
