@@ -23,6 +23,16 @@
         android:fontFamily="@font/super_frog"
         android:textSize="16sp" />
 
+    <TextView
+        android:id="@+id/tvLoading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="8dp"
+        android:fontFamily="@font/super_frog"
+        android:text="Loading apps…"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

@@ -57,7 +57,9 @@ public class AppPickerActivity extends Activity {
     private final Set<String> blockedSites = new HashSet<>();
     private Drawable browserIcon;
     private AppAdapter adapter;
-    private TextView tvCount, tvEmpty;
+    private TextView tvCount, tvEmpty, tvLoading;
+    /** True until the background scan for installed apps has finished. */
+    private boolean loading = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +69,7 @@ public class AppPickerActivity extends Activity {
 
         tvCount = findViewById(R.id.tvCount);
         tvEmpty = findViewById(R.id.tvEmpty);
+        tvLoading = findViewById(R.id.tvLoading);
         ListView list = findViewById(R.id.lvApps);
         list.setEmptyView(tvEmpty);
 
@@ -93,6 +96,7 @@ public class AppPickerActivity extends Activity {
             final Drawable icon = Browsers.defaultIcon(getPackageManager());
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed()) return;
+                loading = false;
                 appEntries.clear();
                 appEntries.addAll(loaded);
                 browserIcon = icon;
@@ -137,6 +141,16 @@ public class AppPickerActivity extends Activity {
         rows.addAll(appEntries);
         adapter.notifyDataSetChanged();
         updateCount();
+        updateLoadingIndicator();
+    }
+
+    /**
+     * The empty view already says "Loading apps…" when the list has no rows. Once the user has
+     * added websites the list is never empty, so show a banner above it for as long as the
+     * app scan is still running.
+     */
+    private void updateLoadingIndicator() {
+        tvLoading.setVisibility(loading && !rows.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
     private void toggle(Entry e) {
