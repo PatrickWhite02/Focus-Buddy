@@ -2,6 +2,7 @@ package com.example.FocusBuddy;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,13 +10,11 @@ import android.os.Looper;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 /** Screen 2: the options (what to block, schedule, start a session). Only shown when ready and idle. */
 public class MainActivity extends Activity {
@@ -31,8 +30,10 @@ public class MainActivity extends Activity {
     };
 
     private TextView tvStatus, tvNextBlock;
-    private Button btnChooseApps, btnSchedule, btnStart, btnUntilScan;
-    private EditText etHours;
+    private Button btnChooseApps, btnSchedule, btnStart, btnUntilScan, btnBlockUntil;
+
+    // The "block until" time of day. The block ends at the next time the clock reads this.
+    private int untilHour, untilMinute;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +42,7 @@ public class MainActivity extends Activity {
 
         tvStatus = findViewById(R.id.tvStatus);
         tvNextBlock = findViewById(R.id.tvNextBlock);
-        etHours = findViewById(R.id.etHours);
+        btnBlockUntil = findViewById(R.id.btnBlockUntil);
         btnChooseApps = findViewById(R.id.btnChooseApps);
         btnSchedule = findViewById(R.id.btnSchedule);
         btnStart = findViewById(R.id.btnStart);
@@ -49,7 +50,15 @@ public class MainActivity extends Activity {
 
         btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
         btnSchedule.setOnClickListener(v -> startActivity(new Intent(this, ScheduleActivity.class)));
+        btnBlockUntil.setOnClickListener(v -> pickUntilTime());
         btnStart.setOnClickListener(v -> onStartClicked());
+
+        // Default: about 3 hours from now, rounded up to the next quarter hour
+        Calendar def = Calendar.getInstance();
+        def.add(Calendar.HOUR_OF_DAY, 3);
+        def.add(Calendar.MINUTE, 15 - def.get(Calendar.MINUTE) % 15);
+        untilHour = def.get(Calendar.HOUR_OF_DAY);
+        untilMinute = def.get(Calendar.MINUTE);
         btnUntilScan.setOnClickListener(v -> onUntilScanClicked());
     }
 
@@ -84,6 +93,7 @@ public class MainActivity extends Activity {
     }
 
     private void refresh() {
+        updateUntilLabel();
         int blockedCount = BlocklistStore.count(this);
         btnChooseApps.setText(blockedCount == 0
                 ? "Choose what to block"
@@ -109,7 +119,7 @@ public class MainActivity extends Activity {
     /** "2:00 PM" if it's today, otherwise with the weekday ("Tue 2:00 PM"). */
     private String formatStart(long startMs) {
         Date start = new Date(startMs);
-        String time = DateFormat.getTimeFormat(this).format(start);
+        String time = DateFormat.format("h:mm a", start).toString(); // always 12-hour with AM/PM
         Calendar now = Calendar.getInstance();
         Calendar then = Calendar.getInstance();
         then.setTime(start);
@@ -120,30 +130,47 @@ public class MainActivity extends Activity {
 
     // ---------- Starting a session ----------
 
+    private void pickUntilTime() {
+        TimePickerDialog dialog = new TimePickerDialog(this, (view, hour, minute) -> {
+            untilHour = hour;
+            untilMinute = minute;
+            updateUntilLabel();
+        }, untilHour, untilMinute, false); // false = 12-hour clock with an AM/PM selector
+        dialog.setTitle("Block until");
+        dialog.show();
+    }
+
+    /** The next moment the clock reads the chosen time (tomorrow if it has already passed today). */
+    private long nextUntilMs() {
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.HOUR_OF_DAY, untilHour);
+        c.set(Calendar.MINUTE, untilMinute);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        if (c.getTimeInMillis() <= System.currentTimeMillis()) {
+            c.add(Calendar.DAY_OF_MONTH, 1);
+        }
+        return c.getTimeInMillis();
+    }
+
+    /** Shows the time, with the weekday when it falls on tomorrow (e.g. "Wed 6:30 AM"). */
+    private void updateUntilLabel() {
+        btnBlockUntil.setText(formatStart(nextUntilMs()));
+    }
+
     private void onStartClicked() {
         if (BlocklistStore.count(this) == 0) {
             Toast.makeText(this, "Choose at least one app or website to block first", Toast.LENGTH_SHORT).show();
             return;
         }
-        float parsed;
-        try {
-            parsed = Float.parseFloat(etHours.getText().toString().trim());
-        } catch (NumberFormatException e) {
-            parsed = 0f;
-        }
-        if (parsed <= 0f) {
-            Toast.makeText(this, "Enter a session length in hours", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        final float hours = parsed;
+        final long until = nextUntilMs();
 
         new AlertDialog.Builder(this)
                 .setTitle("Start focus session?")
-                .setMessage(String.format(Locale.US,
-                        "Blocked apps will be locked for %.2f hours. The only way to end it early "
-                                + "is to scan the unlock QR code.", hours))
+                .setMessage("Blocked apps will be locked until " + formatStart(until)
+                        + ". The only way to end it early is to scan the unlock QR code.")
                 .setPositiveButton("Start", (d, w) -> {
-                    SessionStore.start(this, hours);
+                    SessionStore.startUntil(this, until);
                     routeIfNeeded();
                 })
                 .setNegativeButton("Cancel", null)

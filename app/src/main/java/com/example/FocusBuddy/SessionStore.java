@@ -19,9 +19,9 @@ public final class SessionStore {
         return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
-    public static void start(Context c, float hours) {
-        long end = System.currentTimeMillis() + (long) (hours * 3_600_000f);
-        prefs(c).edit().putLong(KEY_END, end).commit();
+    /** Starts a block that lasts until the given time (ms since epoch). */
+    public static void startUntil(Context c, long endMs) {
+        prefs(c).edit().putLong(KEY_END, endMs).commit();
     }
 
     /** Starts a block with no end time. Only scanning the unlock QR code ends it. */
