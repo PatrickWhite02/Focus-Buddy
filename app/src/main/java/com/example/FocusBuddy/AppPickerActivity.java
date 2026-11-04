@@ -22,12 +22,15 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Lists the websites the user added (top) and the apps they have installed, including web
@@ -60,6 +63,10 @@ public class AppPickerActivity extends Activity {
     private TextView tvCount, tvEmpty, tvLoading;
     /** True until the background scan for installed apps has finished. */
     private boolean loading = true;
+    /** Website icons fetched so far, by host; sites missing from here show the browser icon. */
+    private final Map<String, Drawable> favicons = new HashMap<>();
+    private final Set<String> faviconRequested = new HashSet<>();
+    private final ExecutorService faviconWorker = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,6 +122,12 @@ public class AppPickerActivity extends Activity {
     }
 
     @Override
+    protected void onDestroy() {
+        faviconWorker.shutdownNow();
+        super.onDestroy();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         leaveIfSessionActive();
@@ -142,6 +155,28 @@ public class AppPickerActivity extends Activity {
         adapter.notifyDataSetChanged();
         updateCount();
         updateLoadingIndicator();
+        loadMissingFavicons();
+    }
+
+    /** Fetches each website's own icon once, in the background, and refreshes the list as they arrive. */
+    private void loadMissingFavicons() {
+        for (Entry e : rows) {
+            if (!e.website || !faviconRequested.add(e.key)) continue;
+            final String host = e.key;
+            try {
+                faviconWorker.execute(() -> {
+                    final Drawable icon = Favicons.load(getApplicationContext(), host);
+                    if (icon == null) return;
+                    runOnUiThread(() -> {
+                        if (isFinishing() || isDestroyed()) return;
+                        favicons.put(host, icon);
+                        adapter.notifyDataSetChanged();
+                    });
+                });
+            } catch (java.util.concurrent.RejectedExecutionException ignored) {
+                // Activity is shutting down
+            }
+        }
     }
 
     /**
@@ -293,8 +328,11 @@ public class AppPickerActivity extends Activity {
                     : getLayoutInflater().inflate(R.layout.item_app, parent, false);
             Entry e = rows.get(position);
             ImageView icon = row.findViewById(R.id.ivIcon);
-            if (e.icon != null) {
-                icon.setImageDrawable(e.icon);
+            Drawable shown = e.website && favicons.containsKey(e.key)
+                    ? favicons.get(e.key)
+                    : e.icon;
+            if (shown != null) {
+                icon.setImageDrawable(shown);
             } else {
                 icon.setImageResource(android.R.drawable.ic_menu_search);
             }

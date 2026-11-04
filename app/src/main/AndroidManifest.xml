@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Only used to download the icons of the websites the user adds to the blocklist -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Lets the app see other installed apps on Android 11+ (for the "apps to block" list):
          anything with a launcher icon, web browsers, and the home screen app -->
     <queries>
