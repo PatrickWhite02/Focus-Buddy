@@ -7,3 +7,4 @@ todo: add an indicator for upcoming scheduled sessions
 NEW FEATURES:
 todo: improve the main running screen activity
 todo: add a "block until" button
+todo: add some form of support for letting the user close the tab with the targeted website, before just killing it (countdown?)
