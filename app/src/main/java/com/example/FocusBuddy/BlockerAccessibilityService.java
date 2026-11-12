@@ -22,7 +22,6 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -51,7 +50,7 @@ public class BlockerAccessibilityService extends AccessibilityService {
     private String gracePkg;    // the browser the warning is about
     private String graceSite;   // the blocked website that triggered it
     private long graceEndsAt;   // elapsedRealtime
-    private Toast graceToast;
+    private TextView graceBanner;   // the countdown banner (an accessibility overlay, not a Toast)
 
     private final Runnable graceTick = new Runnable() {
         @Override
@@ -189,16 +188,59 @@ public class BlockerAccessibilityService extends AccessibilityService {
     private void cancelGrace() {
         graceActive = false;
         main.removeCallbacks(graceTick);
-        if (graceToast != null) {
-            graceToast.cancel();
-            graceToast = null;
+        hideGraceBanner();
+    }
+
+    /**
+     * Shows (or updates) the countdown banner at the bottom of the screen. This is deliberately
+     * not a Toast: Android silently drops toasts from an app that isn't in the foreground when
+     * that app's notifications are disabled, and on Android 13+ they are off until the user grants
+     * POST_NOTIFICATIONS. An accessibility overlay needs no permission, same as the block dialog.
+     */
+    private void showGraceToast(String text) {
+        if (graceBanner != null) {
+            graceBanner.setText(text);
+            return;
+        }
+        TextView banner = new TextView(this);
+        banner.setText(text);
+        banner.setTextSize(14f);
+        banner.setTextColor(Color.WHITE);
+        banner.setGravity(Gravity.CENTER);
+        banner.setPadding(dp(20), dp(12), dp(20), dp(12));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xE6323232);
+        bg.setCornerRadius(dp(24));
+        banner.setBackground(bg);
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        lp.y = dp(96);
+        lp.horizontalMargin = 0.05f;
+
+        try {
+            ((WindowManager) getSystemService(WINDOW_SERVICE)).addView(banner, lp);
+            graceBanner = banner;
+        } catch (Exception ignored) {
+            // No banner; the tab still gets closed when the grace period ends
         }
     }
 
-    private void showGraceToast(String text) {
-        if (graceToast != null) graceToast.cancel();
-        graceToast = Toast.makeText(this, text, Toast.LENGTH_LONG);
-        graceToast.show();
+    private void hideGraceBanner() {
+        if (graceBanner != null) {
+            try {
+                ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(graceBanner);
+            } catch (Exception ignored) {
+            }
+            graceBanner = null;
+        }
     }
 
     /**
