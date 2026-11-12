@@ -61,6 +61,12 @@
         </LinearLayout>
 
         <Button
+            android:id="@+id/btnBlockHours"
+            style="@style/BaseButtonStyle"
+            android:text="Block for a number of hours"
+            />
+
+        <Button
             android:id="@+id/btnChooseApps"
             style="@style/BaseButtonStyle"
             android:text="Choose what to block"

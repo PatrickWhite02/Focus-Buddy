@@ -13,9 +13,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.text.InputType;
 import android.text.format.DateFormat;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,10 +44,13 @@ public class MainActivity extends Activity {
     private boolean askedNoticePermissions = false;
 
     private TextView tvStatus, tvNextBlock;
-    private Button btnChooseApps, btnSchedule, btnStart, btnUntilScan, btnBlockUntil;
+    private Button btnChooseApps, btnSchedule, btnStart, btnUntilScan, btnBlockUntil, btnBlockHours;
 
     // The "block until" time of day. The block ends at the next time the clock reads this.
     private int untilHour, untilMinute;
+    // The other way to choose: a length in minutes, counted from the moment the session starts.
+    // 0 means the "block until" time above is in use. Picking either one replaces the other.
+    private long durationMinutes = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +60,7 @@ public class MainActivity extends Activity {
         tvStatus = findViewById(R.id.tvStatus);
         tvNextBlock = findViewById(R.id.tvNextBlock);
         btnBlockUntil = findViewById(R.id.btnBlockUntil);
+        btnBlockHours = findViewById(R.id.btnBlockHours);
         btnChooseApps = findViewById(R.id.btnChooseApps);
         btnSchedule = findViewById(R.id.btnSchedule);
         btnStart = findViewById(R.id.btnStart);
@@ -61,6 +69,7 @@ public class MainActivity extends Activity {
         btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
         btnSchedule.setOnClickListener(v -> startActivity(new Intent(this, ScheduleActivity.class)));
         btnBlockUntil.setOnClickListener(v -> pickUntilTime());
+        btnBlockHours.setOnClickListener(v -> pickHours());
         btnStart.setOnClickListener(v -> onStartClicked());
 
         // Default: about 3 hours from now, rounded up to the next quarter hour
@@ -185,10 +194,75 @@ public class MainActivity extends Activity {
         TimePickerDialog dialog = new TimePickerDialog(this, (view, hour, minute) -> {
             untilHour = hour;
             untilMinute = minute;
+            durationMinutes = 0;
             updateUntilLabel();
         }, untilHour, untilMinute, false); // false = 12-hour clock with an AM/PM selector
         dialog.setTitle("Block until");
         dialog.show();
+    }
+
+    /**
+     * The other way of choosing the end: a length in hours and minutes. Only the length is
+     * remembered here; the end time is worked out when the session actually starts, so the full
+     * length is always blocked.
+     */
+    private void pickHours() {
+        final EditText hours = numberField("hours");
+        final EditText minutes = numberField("minutes");
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        int pad = (int) (24 * getResources().getDisplayMetrics().density);
+        row.setPadding(pad, pad / 3, pad, 0);
+        row.addView(hours, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(minutes, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+        new AlertDialog.Builder(this)
+                .setTitle("Block for how long?")
+                .setView(row)
+                .setPositiveButton("Set", (d, w) -> setDuration(
+                        wholeNumber(hours.getText().toString()),
+                        wholeNumber(minutes.getText().toString())))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private EditText numberField(String hint) {
+        EditText field = new EditText(this);
+        field.setInputType(InputType.TYPE_CLASS_NUMBER); // whole numbers only
+        field.setHint(hint);
+        field.setGravity(Gravity.CENTER);
+        return field;
+    }
+
+    /** A blank box counts as 0; anything unreadable (like a number too big to hold) is -1. */
+    private static long wholeNumber(String text) {
+        String t = text.trim();
+        if (t.isEmpty()) return 0;
+        try {
+            return Long.parseLong(t);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private void setDuration(long hours, long minutes) {
+        long total = hours < 0 || minutes < 0 ? -1 : hours * 60 + minutes;
+        // "Block until" is a time within the next 24 hours, so that's the limit here too
+        if (total < 1 || total > 24 * 60) {
+            Toast.makeText(this, "Enter a time between 1 minute and 24 hours", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        durationMinutes = total;
+        updateUntilLabel();
+    }
+
+    private static String formatDuration(long minutes) {
+        long h = minutes / 60;
+        long m = minutes % 60;
+        String hours = h + (h == 1 ? " hour" : " hours");
+        String mins = m + (m == 1 ? " minute" : " minutes");
+        return h == 0 ? mins : (m == 0 ? hours : hours + " " + mins);
     }
 
     /** The next moment the clock reads the chosen time (tomorrow if it has already passed today). */
@@ -206,7 +280,12 @@ public class MainActivity extends Activity {
 
     /** Shows the time, with the weekday when it falls on tomorrow (e.g. "Wed 6:30 AM"). */
     private void updateUntilLabel() {
+        boolean byHours = durationMinutes > 0;
         btnBlockUntil.setText(formatStart(nextUntilMs()));
+        btnBlockUntil.setAlpha(byHours ? 0.5f : 1f); // dimmed while the hours option is the one in use
+        btnBlockHours.setText(byHours
+                ? "Block for " + formatDuration(durationMinutes)
+                : "Block for a number of hours");
     }
 
     private void onStartClicked() {
@@ -214,13 +293,20 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "Choose at least one app or website to block first", Toast.LENGTH_SHORT).show();
             return;
         }
-        final long until = nextUntilMs();
+        final boolean byHours = durationMinutes > 0;
+        final long chosenUntil = nextUntilMs();
 
         new AlertDialog.Builder(this)
                 .setTitle("Start focus session?")
-                .setMessage("Blocked apps will be locked until " + formatStart(until)
+                .setMessage("Blocked apps will be locked "
+                        + (byHours ? "for " + formatDuration(durationMinutes)
+                                : "until " + formatStart(chosenUntil))
                         + ". The only way to end it early is to scan the unlock QR code.")
                 .setPositiveButton("Start", (d, w) -> {
+                    // The end time is set now, at the moment the session starts
+                    long until = byHours
+                            ? System.currentTimeMillis() + durationMinutes * 60_000L
+                            : chosenUntil;
                     SessionStore.startUntil(this, until);
                     routeIfNeeded();
                 })
