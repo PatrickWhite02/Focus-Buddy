@@ -1,13 +1,11 @@
 TEST IMPLEMENTED FEATURES:
-todo: add some form of support for letting the user close the tab with the targeted website, before just killing it (countdown?)
+todo: test website countdown
 todo: make sure the browser checker isn't more intrusive than it needs to be.
     I'm especially concerned it might snoop on non-browsers, in the name of detecting third party browsers
 todo: make sure the list re-fetches on every open.
     There was one occurrence where it only loaded a few apps, and then reloaded that same shortened list every subsequent open
-todo: toast not appearing during website block countdown
-todo: update README.MD to indicate the new procedure 
+todo: test the notification warnings 
 
 NEW FEATURES:
 todo: improve the UI
     Generally less cluttered
-todo: add notification for warnings before a scheduled block. 10 mins, 5 mins, 1 min, launch
