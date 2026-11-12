@@ -23,7 +23,6 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -34,10 +33,17 @@ public class BlockerAccessibilityService extends AccessibilityService {
     private View overlay;
     private long lastOverlayAt = 0L;
 
-    // Browsers installed on the phone (refreshed once a minute), and a debounce for URL checks
+    // The browsers installed on the phone. Worked out once when the service starts, and again only
+    // when an app is installed, updated or removed. Nothing but these packages is ever read for URLs.
     private Set<String> browsers = Collections.emptySet();
-    private long browsersAt = -1L;
     private boolean siteCheckPending = false;
+
+    private final BroadcastReceiver packagesChanged = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            browsers = Browsers.packages(getPackageManager());
+        }
+    };
 
     // Visiting a blocked website doesn't close the browser straight away: the user gets a grace
     // period to close the tab themselves. While it runs, a toast counts down.
@@ -112,6 +118,15 @@ public class BlockerAccessibilityService extends AccessibilityService {
     protected void onServiceConnected() {
         super.onServiceConnected();
         registerReceiver(screenOn, new IntentFilter(Intent.ACTION_SCREEN_ON));
+
+        browsers = Browsers.packages(getPackageManager());
+        IntentFilter pkgs = new IntentFilter();
+        pkgs.addAction(Intent.ACTION_PACKAGE_ADDED);
+        pkgs.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        pkgs.addAction(Intent.ACTION_PACKAGE_REPLACED);
+        pkgs.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        pkgs.addDataScheme("package");
+        registerReceiver(packagesChanged, pkgs);
         ScheduleStore.listen(this, scheduleChanged);
         armNextWindowTimer();
     }
@@ -144,11 +159,6 @@ public class BlockerAccessibilityService extends AccessibilityService {
     }
 
     private boolean isBrowser(String pkg) {
-        long now = SystemClock.elapsedRealtime();
-        if (browsersAt < 0 || now - browsersAt > 60_000) {
-            browsers = Browsers.packages(getPackageManager());
-            browsersAt = now;
-        }
         return browsers.contains(pkg);
     }
 
@@ -289,11 +299,9 @@ public class BlockerAccessibilityService extends AccessibilityService {
         if (!pkg.equals(root.getPackageName().toString())) return r;
         r.inBrowser = true;
 
-        boolean foundAddressBar = false;
         for (String name : Config.URL_BAR_ID_NAMES) {
             List<AccessibilityNodeInfo> bars = root.findAccessibilityNodeInfosByViewId(pkg + ":id/" + name);
             for (AccessibilityNodeInfo bar : bars) {
-                foundAddressBar = true;
                 CharSequence text = bar.getText();
                 String hit = BlocklistStore.blockedSiteIn(this, text);
                 if (hit != null) {
@@ -306,28 +314,6 @@ public class BlockerAccessibilityService extends AccessibilityService {
                         && BlocklistStore.normalizeHost(text.toString()) != null) {
                     r.otherUrl = true;
                 }
-            }
-        }
-        if (foundAddressBar) return r;
-
-        // Unknown browser: look through (a limited number of) the screen's text fields instead.
-        // These could be fields on the web page itself, so they can only ever confirm a blocked site.
-        ArrayDeque<AccessibilityNodeInfo> queue = new ArrayDeque<>();
-        queue.add(root);
-        int visited = 0;
-        while (!queue.isEmpty() && visited < 200) {
-            AccessibilityNodeInfo node = queue.poll();
-            visited++;
-            if ("android.widget.EditText".contentEquals(node.getClassName() == null ? "" : node.getClassName())) {
-                String hit = BlocklistStore.blockedSiteIn(this, node.getText());
-                if (hit != null) {
-                    r.blockedSite = hit;
-                    return r;
-                }
-            }
-            for (int i = 0; i < node.getChildCount(); i++) {
-                AccessibilityNodeInfo child = node.getChild(i);
-                if (child != null) queue.add(child);
             }
         }
         return r;
@@ -441,6 +427,7 @@ public class BlockerAccessibilityService extends AccessibilityService {
         ScheduleStore.stopListening(this, scheduleChanged);
         try {
             unregisterReceiver(screenOn);
+            unregisterReceiver(packagesChanged);
         } catch (IllegalArgumentException ignored) {
             // wasn't registered
         }
