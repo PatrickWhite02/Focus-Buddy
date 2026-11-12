@@ -63,6 +63,8 @@ public class AppPickerActivity extends Activity {
     private TextView tvCount, tvEmpty, tvLoading;
     /** True until the background scan for installed apps has finished. */
     private boolean loading = true;
+    /** Bumped on every reload so a slow, older scan can never overwrite a newer one. */
+    private int loadGeneration = 0;
     /** Website icons fetched so far, by host; sites missing from here show the browser icon. */
     private final Map<String, Drawable> favicons = new HashMap<>();
     private final Set<String> faviconRequested = new HashSet<>();
@@ -96,13 +98,39 @@ public class AppPickerActivity extends Activity {
         blockedApps.addAll(BlocklistStore.get(this));
         blockedSites.addAll(BlocklistStore.blockedSites(this));
         rebuildRows();
+    }
+
+    @Override
+    protected void onDestroy() {
+        faviconWorker.shutdownNow();
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (leaveIfSessionActive()) return;
+        // Runs on first open and every time the user comes back to this screen (e.g. after
+        // installing or uninstalling an app), so the list is always a fresh scan, never reused.
+        reloadApps();
+    }
+
+    /** Throws away the current app list and scans the phone again. */
+    private void reloadApps() {
+        final int generation = ++loadGeneration;
+        loading = true;
+        tvEmpty.setText("Loading apps\u2026");
+        appEntries.clear();
+        blockedApps.clear();
+        blockedApps.addAll(BlocklistStore.get(this));
+        rebuildRows();
 
         // Loading labels and icons for every app can take a moment, so keep it off the UI thread.
         new Thread(() -> {
             final List<Entry> loaded = loadApps();
             final Drawable icon = Browsers.defaultIcon(getPackageManager());
             runOnUiThread(() -> {
-                if (isFinishing() || isDestroyed()) return;
+                if (isFinishing() || isDestroyed() || generation != loadGeneration) return;
                 loading = false;
                 appEntries.clear();
                 appEntries.addAll(loaded);
@@ -119,18 +147,6 @@ public class AppPickerActivity extends Activity {
                 rebuildRows();
             });
         }).start();
-    }
-
-    @Override
-    protected void onDestroy() {
-        faviconWorker.shutdownNow();
-        super.onDestroy();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        leaveIfSessionActive();
     }
 
     private boolean leaveIfSessionActive() {
