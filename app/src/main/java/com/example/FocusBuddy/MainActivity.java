@@ -1,12 +1,18 @@
 package com.example.FocusBuddy;
 
+import android.Manifest;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.Button;
@@ -28,6 +34,10 @@ public class MainActivity extends Activity {
             }
         }
     };
+
+    private static final int REQ_NOTIFICATIONS = 1;
+    /** The notification / exact-alarm questions are asked at most once per visit to this screen. */
+    private boolean askedNoticePermissions = false;
 
     private TextView tvStatus, tvNextBlock;
     private Button btnChooseApps, btnSchedule, btnStart, btnUntilScan, btnBlockUntil;
@@ -67,6 +77,8 @@ public class MainActivity extends Activity {
         super.onResume();
         if (routeIfNeeded()) return;
         refresh();
+        ScheduleNotifier.arm(this); // also picks up an exact-alarm permission granted in Settings
+        askNoticePermissionsIfNeeded();
         // Keep checking so a scheduled block that starts while this screen is open moves us along
         ui.postDelayed(tick, 1000);
     }
@@ -75,6 +87,45 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         ui.removeCallbacks(tick);
+    }
+
+    // ---------- Permissions for the schedule warnings ----------
+
+    /** Only asks once the user has a scheduled window, since that's what the notifications are for. */
+    private void askNoticePermissionsIfNeeded() {
+        if (askedNoticePermissions
+                || ScheduleStore.nextStartAfter(this, System.currentTimeMillis()) == 0L) {
+            return;
+        }
+        askedNoticePermissions = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIFICATIONS);
+            return; // the exact-alarm question follows the answer
+        }
+        askExactAlarmIfNeeded();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_NOTIFICATIONS && !isFinishing()) askExactAlarmIfNeeded();
+    }
+
+    private void askExactAlarmIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (am.canScheduleExactAlarms()) return;
+        new AlertDialog.Builder(this)
+                .setTitle("Allow exact alarms?")
+                .setMessage("Without this, Android may deliver the warnings before a scheduled "
+                        + "session a few minutes late.")
+                .setPositiveButton("Open settings", (d, w) -> startActivity(new Intent(
+                        Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                        Uri.parse("package:" + getPackageName()))))
+                .setNegativeButton("Not now", null)
+                .show();
     }
 
     /** Hands off to the right screen if this one isn't it. Returns true if we left. */

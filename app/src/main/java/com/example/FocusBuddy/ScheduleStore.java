@@ -12,9 +12,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Weekly blocking windows ("Mondays 9:00-12:00"). Nothing is scheduled with the system: a session
- * counts as active whenever the clock is inside a window, which SessionStore checks on demand. That
- * means windows keep working after a reboot and need no alarm permissions.
+ * Weekly blocking windows ("Mondays 9:00-12:00"). Blocking itself isn't scheduled with the system: a
+ * session counts as active whenever the clock is inside a window, which SessionStore checks on
+ * demand. That means windows keep working after a reboot and need no alarm permissions. (Only the
+ * heads-up notifications before a window, see ScheduleNotifier, use an alarm.)
  */
 public final class ScheduleStore {
     private static final String PREFS = "focus_schedule";
@@ -137,26 +138,49 @@ public final class ScheduleStore {
 
     /** When the next window opens after {@code now} (ms), or 0 if nothing is scheduled. */
     public static long nextStartAfter(Context c, long now) {
-        Set<String> all = raw(c);
-        if (all.isEmpty()) return 0L;
-
         long best = 0L;
-        for (String s : all) {
+        for (String s : raw(c)) {
             Window w = Window.decode(s);
             if (w == null) continue;
-            for (int ahead = 0; ahead <= 7; ahead++) { // 7 = the same weekday next week
-                Calendar cal = Calendar.getInstance();
-                cal.setTimeInMillis(now);
-                cal.add(Calendar.DAY_OF_YEAR, ahead);
-                if (cal.get(Calendar.DAY_OF_WEEK) != w.day) continue;
-                cal.set(Calendar.HOUR_OF_DAY, w.startMin / 60);
-                cal.set(Calendar.MINUTE, w.startMin % 60);
-                cal.set(Calendar.SECOND, 0);
-                cal.set(Calendar.MILLISECOND, 0);
-                long t = cal.getTimeInMillis();
-                if (t > now) {
-                    if (best == 0L || t < best) best = t;
-                    break;
+            long t = startAfter(w, now);
+            if (t > 0L && (best == 0L || t < best)) best = t;
+        }
+        return best;
+    }
+
+    /** The first time after {@code now} (ms) that this window opens, or 0. */
+    private static long startAfter(Window w, long now) {
+        for (int ahead = 0; ahead <= 7; ahead++) { // 7 = the same weekday next week
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(now);
+            cal.add(Calendar.DAY_OF_YEAR, ahead);
+            if (cal.get(Calendar.DAY_OF_WEEK) != w.day) continue;
+            cal.set(Calendar.HOUR_OF_DAY, w.startMin / 60);
+            cal.set(Calendar.MINUTE, w.startMin % 60);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            long t = cal.getTimeInMillis();
+            if (t > now) return t;
+        }
+        return 0L;
+    }
+
+    /**
+     * The next heads-up to send after {@code now}: for every upcoming window start, one moment per
+     * entry of {@code minutesBefore} (0 = the start itself). Returns {fireAt, windowStart,
+     * minutesBefore} for the earliest one, or null if nothing is scheduled.
+     */
+    public static long[] nextNotice(Context c, long now, int[] minutesBefore) {
+        long[] best = null;
+        for (String s : raw(c)) {
+            Window w = Window.decode(s);
+            if (w == null) continue;
+            long start = startAfter(w, now);
+            if (start == 0L) continue;
+            for (int m : minutesBefore) {
+                long fire = start - m * 60_000L;
+                if (fire > now && (best == null || fire < best[0])) {
+                    best = new long[] {fire, start, m};
                 }
             }
         }

@@ -99,6 +99,7 @@ public class BlockerAccessibilityService extends AccessibilityService {
             (prefs, key) -> armNextWindowTimer();
 
     private void armNextWindowTimer() {
+        ScheduleNotifier.arm(this); // keeps the heads-up notification alarm in step with the schedule
         main.removeCallbacks(windowOpened);
         long now = System.currentTimeMillis();
         long next = ScheduleStore.nextStartAfter(this, now);
