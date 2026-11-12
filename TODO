@@ -5,6 +5,7 @@ todo: make sure the browser checker isn't more intrusive than it needs to be.
 todo: make sure the list re-fetches on every open.
     There was one occurrence where it only loaded a few apps, and then reloaded that same shortened list every subsequent open
 todo: test the notification warnings 
+todo: test the new "block for x hours" feature
 
 NEW FEATURES:
 todo: improve the UI
