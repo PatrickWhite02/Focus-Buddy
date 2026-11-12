@@ -34,16 +34,22 @@ Once both permissions are enabled, you're ready to go.
 
 1. Open Focus Buddy.
 2. Tap **Choose what to block** and switch on every app (social media, YouTube, web browsers...) you want blocked. To block a website, tap **Add website** and type its address (like `youtube.com`); it's added to the same list with a toggle, and you can hold a website's row to remove it. You have to pick at least one app or website before you can start a session, and the list can't be changed while a session is running.
-3. Select how many hours you want your blocking session to last (decimals work).
-4. Start the session. Or, instead of picking a length, tap **Block until QR scan**: it asks you to confirm, then blocks with no timer until you scan the unlock QR code.
+3. Under **Block until**, pick the time of day you want the session to end (it ends the next time the clock reaches it).
+4. Tap **Start focus session**. Or, instead of picking a time, tap **Block until QR scan**: it asks you to confirm, then blocks with no timer until you scan the unlock QR code.
 
-Focus Buddy will block the apps you chose while the session is active. For websites, it reads the address bar of the browser in front of you and sends you home if it shows a blocked site (or one of its subdomains). It knows the address bars of Chrome, Brave, Edge, Firefox, Samsung Internet, Opera and DuckDuckGo; for another browser it falls back to scanning the screen's text fields, and you can add its address bar id to `Config.URL_BAR_ID_NAMES`.
+Focus Buddy will block the apps you chose while the session is active. Opening one shows a message and sends you to the home screen.
+
+### Blocked websites
+
+Websites are only checked in web browsers. Focus Buddy reads the address bar of the browser in front of you, and only the address bar. If it shows a blocked site (or one of its subdomains), you get 10 seconds to leave: a banner at the bottom of the screen counts down, and if you're still on the site when it runs out, you're sent to the home screen. Leaving the site or the browser before then cancels it.
+
+It recognizes the address bars of Chrome, Brave, Edge, Firefox, Samsung Internet, Opera and DuckDuckGo (and browsers built on them). A browser that isn't recognized won't have its websites blocked; to add one, put its address bar's view id in `Config.URL_BAR_ID_NAMES`.
 
 ### Scheduled sessions
 
 For sessions that start by themselves, tap **Scheduled sessions**. Each day of the week has a **+**: tap it, pick a start time and an end time, and that window shows up under the day (an end time earlier than the start runs past midnight). Add as many windows to a day as you like, and tap the trash can next to one to remove it.
 
-Whenever the clock is inside a window, a session is running, with the same blocking and the same locked settings as a manual session, and nothing has to be opened or started. While a scheduled window is running, the main screen shows "Blocked until 12:00 PM" where a manual session would show its countdown. Like the app list, the schedule can't be edited while a session is running.
+Whenever the clock is inside a window, a session is running, with the same blocking and the same locked settings as a manual session, and nothing has to be opened or started. You get a notification 10 minutes, 5 minutes and 1 minute before a window opens, and another when it does. For these, Focus Buddy asks for permission to send notifications and, on Android 12 and later, to set exact alarms; without the latter, Android may deliver the notifications a few minutes late. While a scheduled window is running, the main screen shows "Blocked until 12:00 PM" where a manual session would show its countdown. Like the app list, the schedule can't be edited while a session is running.
 
 ### Ending a Session Early
 
@@ -55,7 +61,7 @@ Scan the QR code using either Focus Buddy's built-in camera or your phone's defa
 
 Focus Buddy does more than just close social media apps.
 
-While a blocking session is active, it also prevents you from opening Focus Buddy's Android app settings. This is intended to make it harder to force-stop the app and disable the blocking service.
+While a blocking session is active, it also prevents you from opening Focus Buddy's pages in Android Settings (App info, Accessibility and Device admin). This is intended to make it harder to force-stop the app and disable the blocking service.
 
 It also prevents you from uninstalling Focus Buddy while the service is running.
 
