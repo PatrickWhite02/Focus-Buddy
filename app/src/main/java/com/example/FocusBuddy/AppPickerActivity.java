@@ -63,7 +63,11 @@ public class AppPickerActivity extends Activity {
     private final Set<String> blockedSites = new HashSet<>();
     private Drawable browserIcon;
     private AppAdapter adapter;
-    private TextView tvCount, tvEmpty, tvLoading;
+    private TextView tvCount, tvEmpty;
+    private ListView list;
+    /** "Loading apps" block at the end of the list: under any websites, where the apps will appear. */
+    private View loadingFooter;
+    private boolean footerAttached = false;
     /** True until the background scan for installed apps has finished. */
     private boolean loading = true;
     /** Bumped on every reload so a slow, older scan can never overwrite a newer one. */
@@ -81,14 +85,19 @@ public class AppPickerActivity extends Activity {
 
         tvCount = findViewById(R.id.tvCount);
         tvEmpty = findViewById(R.id.tvEmpty);
-        tvLoading = findViewById(R.id.tvLoading);
-        ListView list = findViewById(R.id.lvApps);
-        list.setEmptyView(tvEmpty);
+        list = findViewById(R.id.lvApps);
+        // Not setEmptyView: it hides the whole list when there are no rows, and the loading footer lives in it
+        loadingFooter = getLayoutInflater().inflate(R.layout.footer_loading, list, false);
+        // Re-fit the footer whenever the list is laid out (first draw, rotation...)
+        list.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> list.post(this::sizeLoadingFooter));
 
         adapter = new AppAdapter();
         list.setAdapter(adapter);
-        list.setOnItemClickListener((parent, view, position, id) -> toggle(rows.get(position)));
+        list.setOnItemClickListener((parent, view, position, id) -> {
+            if (position < rows.size()) toggle(rows.get(position));
+        });
         list.setOnItemLongClickListener((parent, view, position, id) -> {
+            if (position >= rows.size()) return false;
             Entry e = rows.get(position);
             if (!e.website) return false;
             confirmRemoveSite(e.key);
@@ -122,7 +131,6 @@ public class AppPickerActivity extends Activity {
     private void reloadApps() {
         final int generation = ++loadGeneration;
         loading = true;
-        tvEmpty.setText("Loading apps\u2026");
         appEntries.clear();
         blockedApps.clear();
         blockedApps.addAll(BlocklistStore.get(this));
@@ -138,9 +146,7 @@ public class AppPickerActivity extends Activity {
                 appEntries.clear();
                 appEntries.addAll(loaded);
                 browserIcon = icon;
-                if (appEntries.isEmpty()) {
-                    tvEmpty.setText("No apps found");
-                } else {
+                if (!appEntries.isEmpty()) {
                     // Forget blocked apps that were uninstalled, so the count matches what's listed
                     Set<String> visible = new HashSet<>();
                     for (Entry e : appEntries) visible.add(e.key);
@@ -173,7 +179,7 @@ public class AppPickerActivity extends Activity {
         rows.addAll(appEntries);
         adapter.notifyDataSetChanged();
         updateCount();
-        updateLoadingIndicator();
+        updateLoadingFooter();
         loadMissingFavicons();
     }
 
@@ -199,12 +205,43 @@ public class AppPickerActivity extends Activity {
     }
 
     /**
-     * The empty view already says "Loading apps…" when the list has no rows. Once the user has
-     * added websites the list is never empty, so show a banner above it for as long as the
-     * app scan is still running.
+     * While the app scan runs, a big "Loading apps" block sits at the end of the list, so it
+     * appears underneath any websites, exactly where the apps will show up. When the scan is
+     * done it is removed, and "No apps found" appears if there is nothing to list at all.
      */
-    private void updateLoadingIndicator() {
-        tvLoading.setVisibility(loading && !rows.isEmpty() ? View.VISIBLE : View.GONE);
+    private void updateLoadingFooter() {
+        if (loading && !footerAttached) {
+            list.addFooterView(loadingFooter, null, false); // not selectable: it isn't a row
+            footerAttached = true;
+        } else if (!loading && footerAttached) {
+            list.removeFooterView(loadingFooter);
+            footerAttached = false;
+        }
+        tvEmpty.setVisibility(!loading && rows.isEmpty() ? View.VISIBLE : View.GONE);
+        sizeLoadingFooter();
+    }
+
+    /** Makes the loading block as tall as the room left under the websites (never shorter than 220dp). */
+    private void sizeLoadingFooter() {
+        if (!footerAttached || list.getHeight() == 0) return;
+        int rowHeight = 0;
+        if (!rows.isEmpty()) {
+            View sample = adapter.getView(0, null, list);
+            int width = list.getWidth() > 0 ? list.getWidth()
+                    : getResources().getDisplayMetrics().widthPixels;
+            sample.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            rowHeight = sample.getMeasuredHeight() + list.getDividerHeight();
+        }
+        int free = list.getHeight() - list.getPaddingTop() - list.getPaddingBottom()
+                - rows.size() * rowHeight;
+        int minimum = Math.round(220 * getResources().getDisplayMetrics().density);
+        int height = Math.max(free, minimum);
+        ViewGroup.LayoutParams lp = loadingFooter.getLayoutParams();
+        if (lp.height != height) { // only on a change, so this can't loop with the layout listener
+            lp.height = height;
+            loadingFooter.setLayoutParams(lp);
+        }
     }
 
     private void toggle(Entry e) {
