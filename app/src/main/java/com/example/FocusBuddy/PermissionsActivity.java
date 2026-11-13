@@ -57,6 +57,10 @@ public class PermissionsActivity extends Activity {
         }
         btnAccessibility.setEnabled(!a11y);
         btnAdmin.setEnabled(!admin);
+        // A fresh install lands here first, so this is where the first-open notification prompt appears
+        if (Permissions.needsNotificationPrompt(this)) {
+            Permissions.requestNotifications(this, 1);
+        }
         tvSetup.setText("Accessibility service: " + (a11y ? "on ✓" : "off")
                 + "\nDevice admin: " + (admin ? "active ✓" : "inactive"));
     }

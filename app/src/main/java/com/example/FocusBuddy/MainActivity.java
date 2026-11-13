@@ -100,26 +100,34 @@ public class MainActivity extends Activity {
 
     // ---------- Permissions for the schedule warnings ----------
 
-    /** Only asks once the user has a scheduled window, since that's what the notifications are for. */
+    /**
+     * Asks for notifications the first time the app is opened (if that hasn't already happened on the
+     * setup screen), and again whenever the user has a scheduled window, since that's what the
+     * notifications are for. The exact-alarm question only matters once there is a schedule.
+     */
     private void askNoticePermissionsIfNeeded() {
-        if (askedNoticePermissions
-                || ScheduleStore.nextStartAfter(this, System.currentTimeMillis()) == 0L) {
+        boolean hasSchedule = ScheduleStore.nextStartAfter(this, System.currentTimeMillis()) != 0L;
+        boolean firstOpen = Permissions.needsNotificationPrompt(this);
+        if (askedNoticePermissions || (!hasSchedule && !firstOpen)) {
             return;
         }
         askedNoticePermissions = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
                         != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[] {Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIFICATIONS);
+            Permissions.requestNotifications(this, REQ_NOTIFICATIONS);
             return; // the exact-alarm question follows the answer
         }
-        askExactAlarmIfNeeded();
+        if (hasSchedule) askExactAlarmIfNeeded();
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQ_NOTIFICATIONS && !isFinishing()) askExactAlarmIfNeeded();
+        if (requestCode == REQ_NOTIFICATIONS && !isFinishing()
+                && ScheduleStore.nextStartAfter(this, System.currentTimeMillis()) != 0L) {
+            askExactAlarmIfNeeded();
+        }
     }
 
     private void askExactAlarmIfNeeded() {
