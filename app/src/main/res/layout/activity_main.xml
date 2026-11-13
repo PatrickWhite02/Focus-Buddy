@@ -56,11 +56,5 @@
             style="@style/BaseButtonStyle"
             android:text="Start focus session"
             />
-
-        <Button
-            android:id="@+id/btnUntilScan"
-            style="@style/BaseButtonStyle"
-            android:text="Block until QR scan"
-            />
     </LinearLayout>
 </LinearLayout>

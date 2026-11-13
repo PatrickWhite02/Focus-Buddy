@@ -34,8 +34,8 @@ Once both permissions are enabled, you're ready to go.
 
 1. Open Focus Buddy.
 2. Tap **Choose what to block** and switch on every app (social media, YouTube, web browsers...) you want blocked. To block a website, tap **Add website** and type its address (like `youtube.com`); it's added to the same list with a toggle, and you can hold a website's row to remove it. You have to pick at least one app or website before you can start a session, and the list can't be changed while a session is running.
-3. Tap **Start focus session**. One dialog opens where you choose how long the block lasts, either way: set a time of day on the clock (it ends the next time the clock reaches it), or type a length in hours and minutes (up to 24 hours). The two stay in sync, so changing one updates the other. With hours, the clock starts when you press **Start**, not when you type the number.
-4. Press **Start** in the dialog (or **Cancel** to back out). Or, instead, tap **Block until QR scan**: it asks you to confirm, then blocks with no timer until you scan the unlock QR code.
+3. Tap **Start focus session**. One dialog opens where you choose how long the block lasts, either way: set a time of day on the clock (it ends the next time the clock reaches it), or type a length in hours and minutes (up to 24 hours). The two stay in sync, so changing one updates the other. Or tick **Block indefinitely** (this greys out the clock and boxes): the block has no timer and lasts until you scan the unlock QR code, so make sure you can get to it first. With hours, the clock starts when you press **Start**, not when you type the number.
+4. Press **Start** in the dialog (or **Cancel** to back out).
 
 Focus Buddy will block the apps you chose while the session is active. Opening one shows a message and sends you to the home screen.
 

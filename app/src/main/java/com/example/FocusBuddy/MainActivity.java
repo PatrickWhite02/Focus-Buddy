@@ -17,6 +17,7 @@ import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TimePicker;
 import android.widget.TextView;
@@ -43,7 +44,7 @@ public class MainActivity extends Activity {
     private boolean askedNoticePermissions = false;
 
     private TextView tvStatus, tvNextBlock;
-    private Button btnChooseApps, btnSchedule, btnStart, btnUntilScan;
+    private Button btnChooseApps, btnSchedule, btnStart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,13 +56,11 @@ public class MainActivity extends Activity {
         btnChooseApps = findViewById(R.id.btnChooseApps);
         btnSchedule = findViewById(R.id.btnSchedule);
         btnStart = findViewById(R.id.btnStart);
-        btnUntilScan = findViewById(R.id.btnUntilScan);
 
         btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
         btnSchedule.setOnClickListener(v -> startActivity(new Intent(this, ScheduleActivity.class)));
         btnStart.setOnClickListener(v -> showStartDialog());
 
-        btnUntilScan.setOnClickListener(v -> onUntilScanClicked());
     }
 
     @Override
@@ -151,8 +150,6 @@ public class MainActivity extends Activity {
         // The session can't start until at least one app is chosen
         btnStart.setEnabled(blockedCount > 0);
         btnStart.setAlpha(blockedCount > 0 ? 1f : 0.5f);
-        btnUntilScan.setEnabled(blockedCount > 0);
-        btnUntilScan.setAlpha(blockedCount > 0 ? 1f : 0.5f);
         tvStatus.setText(blockedCount == 0
                 ? "Choose what to block before you start a session."
                 : "No session running.");
@@ -195,6 +192,10 @@ public class MainActivity extends Activity {
         final TimePicker clock = content.findViewById(R.id.timePicker);
         final EditText hours = content.findViewById(R.id.etHours);
         final EditText minutes = content.findViewById(R.id.etMinutes);
+        final CheckBox indefinite = content.findViewById(R.id.cbIndefinite);
+        final View timeControls = content.findViewById(R.id.timeControls);
+        final View timeBlocker = content.findViewById(R.id.timeBlocker);
+        final TextView note = content.findViewById(R.id.tvNote);
         clock.setIs24HourView(false); // 12-hour clock with an AM/PM selector
 
         // Default: 3 hours from now, rounded up to the next quarter hour
@@ -246,6 +247,19 @@ public class MainActivity extends Activity {
 
         clockToBoxes.run(); // fill the boxes to match the default time
 
+        // "Block indefinitely": no timer at all, so grey out the clock and boxes
+        final String timedNote = "The only way to end a session early is to scan the unlock QR code.";
+        final String indefiniteNote = "Your blocked apps and websites stay blocked until you scan the "
+                + "unlock QR code, so make sure you can get to it first.";
+        note.setText(timedNote);
+        indefinite.setOnCheckedChangeListener((box, checked) -> {
+            timeControls.setAlpha(checked ? 0.4f : 1f);
+            timeBlocker.setVisibility(checked ? View.VISIBLE : View.GONE);
+            hours.setEnabled(!checked);
+            minutes.setEnabled(!checked);
+            note.setText(checked ? indefiniteNote : timedNote);
+        });
+
         final AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Start focus session")
                 .setView(content)
@@ -255,6 +269,12 @@ public class MainActivity extends Activity {
         dialog.show();
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            if (indefinite.isChecked()) {
+                dialog.dismiss();
+                SessionStore.startUntilScan(this);
+                routeIfNeeded();
+                return;
+            }
             long until;
             if (byDuration[0]) {
                 long total = totalMinutes(hours, minutes);
@@ -312,23 +332,5 @@ public class MainActivity extends Activity {
         long now = System.currentTimeMillis();
         long startOfThisMinute = now - now % 60_000L;
         return Math.max(1L, Math.round((nextOccurrenceMs(hour, minute) - startOfThisMinute) / 60_000.0));
-    }
-
-    private void onUntilScanClicked() {
-        if (BlocklistStore.count(this) == 0) {
-            Toast.makeText(this, "Choose at least one app or website to block first", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        new AlertDialog.Builder(this)
-                .setTitle("Block until you scan the QR code?")
-                .setMessage("This starts a block with no timer. Your blocked apps and websites stay "
-                        + "blocked until you scan the unlock QR code, so make sure you can get to "
-                        + "it first.")
-                .setPositiveButton("Start block", (d, w) -> {
-                    SessionStore.startUntilScan(this);
-                    routeIfNeeded();
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
     }
 }

@@ -11,61 +11,90 @@
         android:paddingEnd="24dp"
         android:paddingTop="8dp">
 
-        <TextView
+        <!-- The clock and boxes, with an invisible layer on top that soaks up touches while
+             "Block indefinitely" is ticked (the clock face ignores setEnabled) -->
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Block until"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
+            android:layout_height="wrap_content">
 
-        <!-- The clock: the block ends the next time it reads this -->
-        <TimePicker
-            android:id="@+id/timePicker"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:timePickerMode="clock" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="8dp"
-            android:text="Or block for"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <EditText
-                android:id="@+id/etHours"
-                android:layout_width="0dp"
+            <LinearLayout
+                android:id="@+id/timeControls"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:hint="hours"
-                android:importantForAutofill="no"
-                android:inputType="number"
-                android:maxLength="3" />
+                android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/etMinutes"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:hint="minutes"
-                android:importantForAutofill="no"
-                android:inputType="number"
-                android:maxLength="4" />
-        </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Block until"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
 
-        <TextView
+                <!-- The clock: the block ends the next time it reads this -->
+                <TimePicker
+                    android:id="@+id/timePicker"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:timePickerMode="clock" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    android:text="Or block for"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/etHours"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:hint="hours"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:maxLength="3" />
+
+                    <EditText
+                        android:id="@+id/etMinutes"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:hint="minutes"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:maxLength="4" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:id="@+id/timeBlocker"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <CheckBox
+            android:id="@+id/cbIndefinite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="12dp"
-            android:text="The only way to end a session early is to scan the unlock QR code."
+            android:layout_marginTop="8dp"
+            android:text="Block indefinitely" />
+
+        <TextView
+            android:id="@+id/tvNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
     </LinearLayout>
