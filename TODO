@@ -1,13 +1,9 @@
 TEST IMPLEMENTED FEATURES:
-todo: test website countdown
-todo: make sure the browser checker isn't more intrusive than it needs to be.
-    I'm especially concerned it might snoop on non-browsers, in the name of detecting third party browsers
-todo: make sure the list re-fetches on every open.
-    There was one occurrence where it only loaded a few apps, and then reloaded that same shortened list every subsequent open
-todo: test the notification warnings 
+todo: test the notification warnings
 todo: test the new "block for x hours" feature
 todo: test new camera system
 
 NEW FEATURES:
 todo: improve the UI
     Generally less cluttered
+    landscape mode?
