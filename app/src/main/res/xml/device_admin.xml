@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-policies>
-        <force-lock />
-    </uses-policies>
-</device-admin>
+<!--  Deliberately declares no policies. Focus Buddy only uses device admin so that Android refuses
+     to uninstall it while the admin is active, and that needs no policy at all. (It used to
+     declare force-lock, which made Android's activation screen say the app could control the
+     screen, even though the app never locks it.)  -->
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android"/>
