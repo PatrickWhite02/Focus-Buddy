@@ -6,7 +6,7 @@ todo: test the notification request
 todo: test the new single "start session" screen
 todo: test the settings screen
 todo: test the hardcore mode
-todo: test the larger loading message
+todo: test the notification permission request
 
 NEW FEATURES:
 todo: improve the UI
@@ -14,3 +14,4 @@ todo: improve the UI
     landscape mode?
 todo: make the dialog box more frog themed? 
 todo: change name? 
+todo: add specific alarm permissions (for precise notifications)
