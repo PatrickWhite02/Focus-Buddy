@@ -1,21 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@drawable/activity_background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="8dp">
+        android:padding="24dp">
+
+        <!-- StartSessionActivity -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/super_frog"
+            android:text="Start session"
+            android:textColor="@color/primary_dark"
+            android:textSize="40sp" />
 
         <!-- The clock and boxes, with an invisible layer on top that soaks up touches while
              "Block indefinitely" is ticked (the clock face ignores setEnabled) -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
 
             <LinearLayout
                 android:id="@+id/timeControls"
@@ -26,9 +36,10 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/super_frog"
                     android:text="Block until"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textColor="@color/primary_dark"
+                    android:textSize="20sp" />
 
                 <!-- The clock: the block ends the next time it reads this -->
                 <TimePicker
@@ -40,10 +51,11 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/super_frog"
                     android:paddingTop="8dp"
                     android:text="Or block for"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textColor="@color/primary_dark"
+                    android:textSize="20sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -96,6 +108,31 @@
             android:layout_height="wrap_content"
             android:paddingTop="4dp"
             android:textColor="@color/text_secondary"
-            android:textSize="12sp" />
+            android:textSize="13sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnCancel"
+                style="@style/BaseButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="Cancel" />
+
+            <Button
+                android:id="@+id/btnStartSession"
+                style="@style/BaseButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="Start" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

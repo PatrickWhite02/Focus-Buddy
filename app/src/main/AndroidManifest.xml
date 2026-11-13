@@ -69,6 +69,12 @@
             android:name=".SettingsActivity"
             android:exported="false" />
 
+        <!-- configChanges: rotating the phone must not rebuild the screen and reset the clock/boxes -->
+        <activity
+            android:name=".StartSessionActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:exported="false" />
+
         <!-- adjustNothing: the "Add website" dialog's keyboard must not resize this screen,
              or the bottom buttons ride up with it and then slide back down when it closes -->
         <activity
