@@ -48,7 +48,7 @@ public class BlockerAccessibilityService extends AccessibilityService {
     // Visiting a blocked website doesn't close the browser straight away: the user gets a grace
     // period to close the tab themselves. While it runs, a toast counts down.
     private static final long GRACE_MS = 10_000L;
-    private static final long TOAST_EVERY_MS = 3_000L;
+    private static final long TOAST_EVERY_MS = 1_000L;
     private static final Set<String> TRANSIENT_WINDOWS =
             new java.util.HashSet<>(java.util.Arrays.asList("com.android.systemui", "android"));
     private boolean graceActive = false;
@@ -71,10 +71,8 @@ public class BlockerAccessibilityService extends AccessibilityService {
                 endGrace();
                 return;
             }
-            if (left >= 2000) {
-                showGraceToast(graceSite + " is blocked. Close the tab within "
-                        + ((left + 999) / 1000) + " seconds.");
-            }
+            showGraceToast(graceSite + " is blocked. Close the tab within "
+                    + ((left + 999) / 1000) + " seconds.");
             main.postDelayed(this, Math.min(left, TOAST_EVERY_MS));
         }
     };
@@ -234,7 +232,6 @@ public class BlockerAccessibilityService extends AccessibilityService {
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
         lp.y = dp(96);
-        lp.horizontalMargin = 0.05f;
 
         try {
             ((WindowManager) getSystemService(WINDOW_SERVICE)).addView(banner, lp);
