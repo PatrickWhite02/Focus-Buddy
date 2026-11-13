@@ -9,7 +9,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
 
-/** Checks for the two permissions the app needs before it can block anything. */
+/** Checks for the accessibility service the app needs before it can block anything, and tracks first-run setup. */
 public final class Permissions {
     private Permissions() {}
 
@@ -32,8 +32,23 @@ public final class Permissions {
         return dpm.isAdminActive(new ComponentName(c, FocusAdminReceiver.class));
     }
 
+    /** Device admin is optional now: it's only requested when the user turns on hardcore mode. */
     public static boolean allGranted(Context c) {
-        return accessibilityEnabled(c) && adminActive(c);
+        return accessibilityEnabled(c);
+    }
+
+    // ---------- First-run setup: the settings screen is shown once, after accessibility is on ----------
+
+    private static final String KEY_SETUP_DONE = "setup_done";
+
+    public static boolean setupDone(Context c) {
+        return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_SETUP_DONE, false);
+    }
+
+    public static void markSetupDone(Context c) {
+        c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_SETUP_DONE, true).apply();
     }
 
     // ---------- Notifications (Android 13+), asked once when the app is first opened ----------

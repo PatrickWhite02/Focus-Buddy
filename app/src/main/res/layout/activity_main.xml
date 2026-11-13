@@ -11,13 +11,50 @@
         android:background="@drawable/activity_background">
 
         <!-- MainActivity: the options screen -->
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:autoSizeMaxTextSize="55sp"
+                android:autoSizeMinTextSize="30sp"
+                android:autoSizeStepGranularity="1sp"
+                android:autoSizeTextType="uniform"
+                android:fontFamily="@font/super_frog"
+                android:maxLines="1"
+                android:text="@string/app_name"
+                android:textColor="@color/primary_dark"
+                android:textSize="55sp" />
+
+            <!-- Not on the running screen: settings can't be changed during a session -->
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Settings"
+                android:src="@drawable/ic_settings" />
+        </LinearLayout>
+
+        <!-- Shown while nothing is selected to block -->
+        <TextView
+            android:id="@+id/tvNoApps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/warning_banner"
             android:fontFamily="@font/super_frog"
-            android:text="@string/app_name"
-            android:textColor="@color/primary_dark"
-            android:textSize="55sp" />
+            android:gravity="center"
+            android:padding="16dp"
+            android:text="No apps or websites selected to block! Open Settings (the gear, top right) and choose what to block."
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/tvStatus"
@@ -38,12 +75,6 @@
             android:textColor="@color/primary_dark"
             android:textSize="16sp"
             android:visibility="gone" />
-
-        <Button
-            android:id="@+id/btnChooseApps"
-            style="@style/BaseButtonStyle"
-            android:text="Choose what to block"
-            />
 
         <Button
             android:id="@+id/btnSchedule"

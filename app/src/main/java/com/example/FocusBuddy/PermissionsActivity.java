@@ -2,9 +2,7 @@ package com.example.FocusBuddy;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,11 +10,11 @@ import android.provider.Settings;
 import android.widget.Button;
 import android.widget.TextView;
 
-/** Screen 1: asks for the accessibility service + device admin. Moves on once both are granted. */
+/** Screen 1: asks for the accessibility service. Moves on once it's granted. */
 public class PermissionsActivity extends Activity {
 
     private TextView tvSetup;
-    private Button btnAccessibility, btnAdmin;
+    private Button btnAccessibility;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,18 +23,8 @@ public class PermissionsActivity extends Activity {
 
         tvSetup = findViewById(R.id.tvSetup);
         btnAccessibility = findViewById(R.id.btnAccessibility);
-        btnAdmin = findViewById(R.id.btnAdmin);
 
         btnAccessibility.setOnClickListener(v -> onEnableAccessibilityClicked());
-
-        btnAdmin.setOnClickListener(v -> {
-            Intent i = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-            i.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
-                    new ComponentName(this, FocusAdminReceiver.class));
-            i.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                    "Stops Focus Buddy from being force-stopped or uninstalled during a focus session.");
-            startActivity(i);
-        });
     }
 
     @Override
@@ -49,20 +37,17 @@ public class PermissionsActivity extends Activity {
             return;
         }
         boolean a11y = Permissions.accessibilityEnabled(this);
-        boolean admin = Permissions.adminActive(this);
-        if (a11y && admin) {
+        if (a11y) {
             startActivity(new Intent(this, MainActivity.class));
             finish();
             return;
         }
         btnAccessibility.setEnabled(!a11y);
-        btnAdmin.setEnabled(!admin);
         // A fresh install lands here first, so this is where the first-open notification prompt appears
         if (Permissions.needsNotificationPrompt(this)) {
             Permissions.requestNotifications(this, 1);
         }
-        tvSetup.setText("Accessibility service: " + (a11y ? "on ✓" : "off")
-                + "\nDevice admin: " + (admin ? "active ✓" : "inactive"));
+        tvSetup.setText("Accessibility service: " + (a11y ? "on ✓" : "off"));
     }
 
     // ---------- Enabling accessibility (with the restricted-settings prompt) ----------

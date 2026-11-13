@@ -149,7 +149,9 @@ public class BlockerAccessibilityService extends AccessibilityService {
                 block(BlocklistStore.labelFor(this, pkg) + " is blocked",
                         "Focus session in progress. Time to get back to what matters.");
             }
-        } else if (Config.SETTINGS_PACKAGES.contains(pkg) && settingsShowsUs()) {
+        } else if (Config.SETTINGS_PACKAGES.contains(pkg) && Permissions.adminActive(this)
+                && settingsShowsUs()) {
+            // Only in hardcore mode (device admin active)
             block("Settings locked", "You can't change Focus Buddy's settings during a session.");
         } else if (BlocklistStore.hasBlockedSites(this) && isBrowser(pkg)) {
             scheduleSiteCheck(pkg);

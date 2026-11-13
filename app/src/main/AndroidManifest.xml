@@ -65,6 +65,10 @@
             android:name=".ActiveBlockActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+
         <!-- adjustNothing: the "Add website" dialog's keyboard must not resize this screen,
              or the bottom buttons ride up with it and then slide back down when it closes -->
         <activity

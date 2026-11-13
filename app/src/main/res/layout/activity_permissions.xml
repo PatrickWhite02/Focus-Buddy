@@ -41,9 +41,5 @@
             style="@style/BaseButtonStyle"
             android:text="Enable accessibility service" />
 
-        <Button
-            android:id="@+id/btnAdmin"
-            style="@style/BaseButtonStyle"
-            android:text="Activate device admin" />
     </LinearLayout>
 </LinearLayout>

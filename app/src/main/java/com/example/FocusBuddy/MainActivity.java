@@ -43,8 +43,8 @@ public class MainActivity extends Activity {
     /** The notification / exact-alarm questions are asked at most once per visit to this screen. */
     private boolean askedNoticePermissions = false;
 
-    private TextView tvStatus, tvNextBlock;
-    private Button btnChooseApps, btnSchedule, btnStart;
+    private TextView tvStatus, tvNextBlock, tvNoApps;
+    private Button btnSchedule, btnStart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,11 +53,12 @@ public class MainActivity extends Activity {
 
         tvStatus = findViewById(R.id.tvStatus);
         tvNextBlock = findViewById(R.id.tvNextBlock);
-        btnChooseApps = findViewById(R.id.btnChooseApps);
+        tvNoApps = findViewById(R.id.tvNoApps);
         btnSchedule = findViewById(R.id.btnSchedule);
         btnStart = findViewById(R.id.btnStart);
 
-        btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
+        findViewById(R.id.btnSettings).setOnClickListener(
+                v -> startActivity(new Intent(this, SettingsActivity.class)));
         btnSchedule.setOnClickListener(v -> startActivity(new Intent(this, ScheduleActivity.class)));
         btnStart.setOnClickListener(v -> showStartDialog());
 
@@ -139,20 +140,19 @@ public class MainActivity extends Activity {
             finish();
             return true;
         }
+        // First run: the settings screen comes once, after accessibility is on, before this screen
+        if (!Permissions.setupDone(this)) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            finish();
+            return true;
+        }
         return false;
     }
 
     private void refresh() {
-        int blockedCount = BlocklistStore.count(this);
-        btnChooseApps.setText(blockedCount == 0
-                ? "Choose what to block"
-                : "Choose what to block (" + blockedCount + " selected)");
-        // The session can't start until at least one app is chosen
-        btnStart.setEnabled(blockedCount > 0);
-        btnStart.setAlpha(blockedCount > 0 ? 1f : 0.5f);
-        tvStatus.setText(blockedCount == 0
-                ? "Choose what to block before you start a session."
-                : "No session running.");
+        // Starting with nothing selected is allowed to be tapped: it explains what to do instead
+        tvNoApps.setVisibility(BlocklistStore.count(this) == 0 ? View.VISIBLE : View.GONE);
+        tvStatus.setText("No session running.");
 
         long next = ScheduleStore.nextStartAfter(this, System.currentTimeMillis());
         if (next > 0L) {
@@ -184,7 +184,15 @@ public class MainActivity extends Activity {
      */
     private void showStartDialog() {
         if (BlocklistStore.count(this) == 0) {
-            Toast.makeText(this, "Choose at least one app or website to block first", Toast.LENGTH_SHORT).show();
+            new AlertDialog.Builder(this)
+                    .setTitle("Nothing to block yet")
+                    .setMessage("You haven't chosen any apps or websites to block. Open Settings "
+                            + "(the gear icon, top right) and choose what to block before "
+                            + "starting a session.")
+                    .setPositiveButton("Open settings",
+                            (d, w) -> startActivity(new Intent(this, SettingsActivity.class)))
+                    .setNegativeButton("Cancel", null)
+                    .show();
             return;
         }
 

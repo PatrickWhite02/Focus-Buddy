@@ -8,7 +8,7 @@ When installing the app, Android will display a warning because the app isn't re
 
 ## Setup
 
-Focus Buddy requires a couple of permissions to do its job. Unfortunately, Android makes setting up accessibility permissions unnecessarily complicated.
+Focus Buddy needs the accessibility permission to do its job. Unfortunately, Android makes setting it up unnecessarily complicated.
 
 ### 1. Enable Accessibility Permissions
 
@@ -24,16 +24,14 @@ The app includes a tutorial to guide you through this process. If anything is co
 
 That's it for accessibility permissions.
 
-### 2. Enable Administrator Permissions
+### 2. Settings (first run)
 
-Return to Focus Buddy and activate the device administrator permission when prompted.
-
-Once both permissions are enabled, you're ready to go.
+Once accessibility is on, Focus Buddy opens its **Settings** screen before the main screen. Choose what to block here, and optionally switch on **Hardcore mode** (see below). Tap **Done** when you're finished. After that, the app opens straight to the main screen, and Settings is always available from the gear icon in its top right corner.
 
 ## Using Focus Buddy
 
 1. Open Focus Buddy.
-2. Tap **Choose what to block** and switch on every app (social media, YouTube, web browsers...) you want blocked. To block a website, tap **Add website** and type its address (like `youtube.com`); it's added to the same list with a toggle, and you can hold a website's row to remove it. You have to pick at least one app or website before you can start a session, and the list can't be changed while a session is running.
+2. Tap the gear icon (top right), then **Choose what to block** and switch on every app (social media, YouTube, web browsers...) you want blocked. To block a website, tap **Add website** and type its address (like `youtube.com`); it's added to the same list with a toggle, and you can hold a website's row to remove it. If nothing is selected, a red warning shows at the top of the main screen and **Start focus session** tells you to set it up first. Settings can't be opened, and the list can't be changed, while a session is running.
 3. Tap **Start focus session**. One dialog opens where you choose how long the block lasts, either way: set a time of day on the clock (it ends the next time the clock reaches it), or type a length in hours and minutes (up to 24 hours). The two stay in sync, so changing one updates the other. Or tick **Block indefinitely** (this greys out the clock and boxes): the block has no timer and lasts until you scan the unlock QR code, so make sure you can get to it first. With hours, the clock starts when you press **Start**, not when you type the number.
 4. Press **Start** in the dialog (or **Cancel** to back out).
 
@@ -57,25 +55,20 @@ Want to end your session before the timer expires?
 
 Scan the QR code using either Focus Buddy's built-in camera or your phone's default camera. This also ends a scheduled window that's currently open; later windows still start on time.
 
-## How Focus Buddy Prevents Distractions
+## Hardcore mode
 
-Focus Buddy does more than just close social media apps.
+Off by default. Switch it on in Settings (a warning explains what it does, then Android asks you to activate Focus Buddy as a device administrator). While it's on:
 
-While a blocking session is active, it also prevents you from opening Focus Buddy's pages in Android Settings (App info, Accessibility and Device admin). This is intended to make it harder to force-stop the app and disable the blocking service.
+- Focus Buddy can't be uninstalled.
+- During a blocking session, Focus Buddy's pages in Android Settings (App info, Accessibility and Device admin) are locked, which makes it harder to force-stop the app or turn off the blocking service.
 
-It also prevents you from uninstalling Focus Buddy while the service is running.
+With hardcore mode off, nothing stops you opening those Settings pages during a session, so a session can be ended by switching the accessibility service off. Hardcore mode exists to prevent that.
 
 ### Uninstalling Focus Buddy
 
-Even when a blocking session isn't running, Android may display an **Uninstall failed** notification when you try to uninstall the app.
+Make sure no session is running, open Settings in Focus Buddy, and switch **Hardcore mode** off. Then uninstall it normally.
 
-If this happens:
-
-1. Tap the **Uninstall failed** notification.
-2. Revoke Focus Buddy's device administrator privileges.
-3. Try uninstalling the app again.
-
-You should now be able to uninstall it normally.
+If you left hardcore mode on, Android may display an **Uninstall failed** notification. Tap it, revoke Focus Buddy's device administrator privileges, and try again.
 
 ## Feedback
 
