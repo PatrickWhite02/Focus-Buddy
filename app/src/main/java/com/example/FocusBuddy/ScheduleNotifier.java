@@ -36,10 +36,17 @@ public final class ScheduleNotifier {
     static void arm(Context c, long after) {
         Context app = c.getApplicationContext();
         AlarmManager am = (AlarmManager) app.getSystemService(Context.ALARM_SERVICE);
-        long[] next = ScheduleStore.nextNotice(app, after, MINUTES_BEFORE);
+        long[] next = Permissions.noticesEnabled(app)
+                ? ScheduleStore.nextNotice(app, after, MINUTES_BEFORE)
+                : null; // switched off in Settings: nothing to arm
 
         Intent intent = new Intent(app, ScheduleNoticeReceiver.class);
         if (next == null) {
+            if (!Permissions.noticesEnabled(app)) {
+                // Also take down a warning that is still showing
+                ((NotificationManager) app.getSystemService(Context.NOTIFICATION_SERVICE))
+                        .cancel(NOTIFICATION_ID);
+            }
             am.cancel(PendingIntent.getBroadcast(app, ALARM_REQUEST, intent,
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
             return;
@@ -64,6 +71,7 @@ public final class ScheduleNotifier {
     }
 
     static void show(Context c, long startAt, int minutesBefore) {
+        if (!Permissions.noticesEnabled(c)) return; // switched off while this alarm was pending
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel(
                 CHANNEL_ID, "Scheduled session warnings", NotificationManager.IMPORTANCE_HIGH));

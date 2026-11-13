@@ -4,8 +4,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.widget.Button;
 import android.widget.Switch;
 
@@ -17,7 +21,8 @@ import android.widget.Switch;
 public class SettingsActivity extends Activity {
 
     private Button btnChooseApps;
-    private Switch swHardcore;
+    private Switch swHardcore, swNotices;
+    private static final int REQ_NOTIFICATIONS = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,12 +31,23 @@ public class SettingsActivity extends Activity {
 
         btnChooseApps = findViewById(R.id.btnChooseApps);
         swHardcore = findViewById(R.id.swHardcore);
+        swNotices = findViewById(R.id.swNotices);
 
         btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
         findViewById(R.id.btnDone).setOnClickListener(v -> finishSettings());
 
-        // A click, not a checked-change listener, so setting the switch from code (see refresh)
-        // never triggers the dialog or removes the admin.
+        // Clicks, not checked-change listeners, so setting a switch from code (see refresh)
+        // never triggers a dialog, a permission request or an admin removal.
+        swNotices.setOnClickListener(v -> {
+            if (swNotices.isChecked()) {
+                // Stays off until Android will really show our notifications
+                swNotices.setChecked(false);
+                enableNotices();
+            } else {
+                Permissions.setNoticesEnabled(this, false);
+            }
+        });
+
         swHardcore.setOnClickListener(v -> {
             if (swHardcore.isChecked()) {
                 // Stays off until the user confirms and Android has really activated the admin
@@ -67,6 +83,47 @@ public class SettingsActivity extends Activity {
         // Hardcore mode simply is "device admin is active", so this also covers the admin being
         // activated or cancelled on Android's own screen, or removed from Android's settings.
         swHardcore.setChecked(Permissions.adminActive(this));
+        // On means: chosen here AND Android will show them (permission given, not blocked for the app)
+        swNotices.setChecked(Permissions.noticesEnabled(this) && Permissions.notificationsAllowed(this));
+    }
+
+    // ---------- Scheduled session notifications ----------
+
+    private void enableNotices() {
+        Permissions.setNoticesEnabled(this, true);
+        if (Permissions.notificationsAllowed(this)) {
+            refresh();
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+            Permissions.requestNotifications(this, REQ_NOTIFICATIONS);
+        } else {
+            showNotificationsBlockedDialog(); // permission is fine; they're switched off for the app
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != REQ_NOTIFICATIONS) return;
+        if (Permissions.notificationsAllowed(this)) {
+            refresh();
+        } else {
+            // Declined (after a second decline Android stops asking, so this is the only route left)
+            showNotificationsBlockedDialog();
+        }
+    }
+
+    private void showNotificationsBlockedDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Notifications are turned off")
+                .setMessage("Android isn't allowing Focus Buddy to show notifications. Open its "
+                        + "notification settings and allow them, then switch this on again.")
+                .setPositiveButton("Open settings", (d, w) -> startActivity(
+                        new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName())))
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     // ---------- Hardcore mode ----------

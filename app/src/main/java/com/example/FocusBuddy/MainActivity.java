@@ -83,6 +83,7 @@ public class MainActivity extends Activity {
      * notifications are for. The exact-alarm question only matters once there is a schedule.
      */
     private void askNoticePermissionsIfNeeded() {
+        if (!Permissions.noticesEnabled(this)) return; // switched off in Settings: don't nag
         boolean hasSchedule = ScheduleStore.nextStartAfter(this, System.currentTimeMillis()) != 0L;
         boolean firstOpen = Permissions.needsNotificationPrompt(this);
         if (askedNoticePermissions || (!hasSchedule && !firstOpen)) {

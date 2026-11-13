@@ -2,6 +2,7 @@ package com.example.FocusBuddy;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -58,7 +59,8 @@ public final class Permissions {
 
     /** True if the notification permission exists on this Android version, isn't granted, and we haven't asked yet. */
     public static boolean needsNotificationPrompt(Context c) {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+        return noticesEnabled(c)
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 && c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
                         != PackageManager.PERMISSION_GRANTED
                 && !c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -71,5 +73,28 @@ public final class Permissions {
         a.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .edit().putBoolean(KEY_NOTIFICATIONS_ASKED, true).apply();
         a.requestPermissions(new String[] {Manifest.permission.POST_NOTIFICATIONS}, requestCode);
+    }
+
+    // ---------- Settings switch: warnings before scheduled sessions ----------
+
+    private static final String KEY_NOTICES_ENABLED = "notices_enabled";
+
+    /** The user's choice in Settings (on unless they switched it off). Says nothing about permission. */
+    public static boolean noticesEnabled(Context c) {
+        return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_NOTICES_ENABLED, true);
+    }
+
+    /** Saves the choice and sets or removes the warning alarm to match. */
+    public static void setNoticesEnabled(Context c, boolean enabled) {
+        c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_NOTICES_ENABLED, enabled).apply();
+        ScheduleNotifier.arm(c);
+    }
+
+    /** True if Android will actually show our notifications (permission granted on 13+, and not switched off for the app). */
+    public static boolean notificationsAllowed(Context c) {
+        NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+        return nm.areNotificationsEnabled();
     }
 }
