@@ -6,6 +6,9 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.InputType;
@@ -128,7 +131,7 @@ public class AppPickerActivity extends Activity {
         // Loading labels and icons for every app can take a moment, so keep it off the UI thread.
         new Thread(() -> {
             final List<Entry> loaded = loadApps();
-            final Drawable icon = Browsers.defaultIcon(getPackageManager());
+            final Drawable icon = toRowIcon(Browsers.defaultIcon(getPackageManager()));
             runOnUiThread(() -> {
                 if (isFinishing() || isDestroyed() || generation != loadGeneration) return;
                 loading = false;
@@ -303,7 +306,8 @@ public class AppPickerActivity extends Activity {
 
         List<Entry> out = new ArrayList<>();
         for (ApplicationInfo ai : found.values()) {
-            out.add(new Entry(ai.packageName, ai.loadLabel(pm).toString(), ai.loadIcon(pm), false));
+            out.add(new Entry(ai.packageName, ai.loadLabel(pm).toString(),
+                    toRowIcon(ai.loadIcon(pm)), false));
         }
         Collections.sort(out, new Comparator<Entry>() {
             @Override
@@ -312,6 +316,22 @@ public class AppPickerActivity extends Activity {
             }
         });
         return out;
+    }
+
+    /**
+     * App icons are usually large adaptive icons that Android re-masks and re-scales every time
+     * a row is drawn, which is what makes scrolling stutter. Drawing each one once into a small
+     * bitmap (the size it is shown at) makes drawing a row nearly free. Runs on the background
+     * thread, so the cost is only paid while "Loading apps" is showing.
+     */
+    private Drawable toRowIcon(Drawable src) {
+        if (src == null) return null;
+        int size = Math.round(40 * getResources().getDisplayMetrics().density);
+        Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmp);
+        src.setBounds(0, 0, size, size);
+        src.draw(canvas);
+        return new BitmapDrawable(getResources(), bmp);
     }
 
     private static boolean isUserApp(ApplicationInfo ai) {
@@ -339,25 +359,45 @@ public class AppPickerActivity extends Activity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            View row = convertView != null
-                    ? convertView
-                    : getLayoutInflater().inflate(R.layout.item_app, parent, false);
+            View row = convertView;
+            Holder h;
+            if (row == null) {
+                row = getLayoutInflater().inflate(R.layout.item_app, parent, false);
+                h = new Holder(row);
+                row.setTag(h);
+            } else {
+                h = (Holder) row.getTag();
+            }
             Entry e = rows.get(position);
-            ImageView icon = row.findViewById(R.id.ivIcon);
             Drawable shown = e.website && favicons.containsKey(e.key)
                     ? favicons.get(e.key)
                     : e.icon;
             if (shown != null) {
-                icon.setImageDrawable(shown);
+                h.icon.setImageDrawable(shown);
             } else {
-                icon.setImageResource(android.R.drawable.ic_menu_search);
+                h.icon.setImageResource(android.R.drawable.ic_menu_search);
             }
-            ((TextView) row.findViewById(R.id.tvAppName)).setText(e.label);
-            ((TextView) row.findViewById(R.id.tvAppPackage))
-                    .setText(e.website ? "Website \u00b7 hold to remove" : e.key);
-            ((Switch) row.findViewById(R.id.swBlock)).setChecked(
+            h.name.setText(e.label);
+            h.sub.setText(e.website ? "Website \u00b7 hold to remove" : e.key);
+            h.toggle.setChecked(
                     e.website ? blockedSites.contains(e.key) : blockedApps.contains(e.key));
+            // setChecked() animates the thumb on a row that's already on screen; a recycled row
+            // would slide its switch while scrolling. Snap it to the right state instead.
+            h.toggle.jumpDrawablesToCurrentState();
             return row;
+        }
+    }
+
+    private static final class Holder {
+        final ImageView icon;
+        final TextView name, sub;
+        final Switch toggle;
+
+        Holder(View row) {
+            icon = row.findViewById(R.id.ivIcon);
+            name = row.findViewById(R.id.tvAppName);
+            sub = row.findViewById(R.id.tvAppPackage);
+            toggle = row.findViewById(R.id.swBlock);
         }
     }
 }
