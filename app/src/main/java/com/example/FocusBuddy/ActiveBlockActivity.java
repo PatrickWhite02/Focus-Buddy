@@ -1,8 +1,6 @@
 package com.example.FocusBuddy;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,13 +11,9 @@ import android.util.TypedValue;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.moduleinstall.ModuleInstall;
-import com.google.android.gms.common.moduleinstall.ModuleInstallClient;
-import com.google.android.gms.common.moduleinstall.ModuleInstallRequest;
-import com.google.mlkit.vision.barcode.common.Barcode;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
+
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -111,53 +105,22 @@ public class ActiveBlockActivity extends Activity {
     // (Scanning the printed QR with any camera app also works; it fires the same focusbuddy:// intent.)
 
     private void scanToUnlock() {
-        GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
-                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-                .build();
-        GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(this, options);
-
-        // The scanner's UI lives in a Google Play services module that may not be on the phone yet.
-        // Make sure it's there (downloading it once if needed) before trying to open it.
-        ModuleInstallClient installer = ModuleInstall.getClient(this);
-        installer.areModulesAvailable(scanner)
-                .addOnSuccessListener(result -> {
-                    if (result.areModulesAvailable()) {
-                        launchScanner(scanner);
-                    } else {
-                        Toast.makeText(this, "Downloading the scanner (one time only)...",
-                                Toast.LENGTH_LONG).show();
-                        installer.installModules(ModuleInstallRequest.newBuilder().addApi(scanner).build())
-                                .addOnSuccessListener(r -> launchScanner(scanner))
-                                .addOnFailureListener(this::scannerUnavailable);
-                    }
-                })
-                .addOnFailureListener(this::scannerUnavailable);
+        new IntentIntegrator(this)
+                .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+                .setPrompt("Scan your unlock QR code")
+                .setBeepEnabled(false)
+                .setOrientationLocked(false)
+                .initiateScan();
     }
 
-    private void launchScanner(GmsBarcodeScanner scanner) {
-        scanner.startScan()
-                .addOnSuccessListener(barcode -> {
-                    boolean ok = SessionStore.unlockFromLink(this, barcode.getRawValue());
-                    Toast.makeText(this, ok ? "Session ended" : "Wrong QR code",
-                            Toast.LENGTH_LONG).show();
-                    routeIfNeeded();
-                })
-                .addOnFailureListener(this::scannerUnavailable);
-    }
-
-    /** Shows why the built-in scanner couldn't open, and offers the phone's camera app instead. */
-    private void scannerUnavailable(Exception e) {
-        new AlertDialog.Builder(this)
-                .setTitle("Couldn't open the built-in scanner")
-                .setMessage(e.getMessage() + "\n\nYou can scan the QR code with your phone's camera app instead.")
-                .setPositiveButton("Open camera", (d, w) -> {
-                    try {
-                        startActivity(new Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA));
-                    } catch (ActivityNotFoundException ex) {
-                        Toast.makeText(this, "No camera app found", Toast.LENGTH_LONG).show();
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != IntentIntegrator.REQUEST_CODE) return;
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result == null || result.getContents() == null) return; // cancelled, or camera denied
+        boolean ok = SessionStore.unlockFromLink(this, result.getContents());
+        Toast.makeText(this, ok ? "Session ended" : "Wrong QR code", Toast.LENGTH_LONG).show();
+        routeIfNeeded();
     }
 }

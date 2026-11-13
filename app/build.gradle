@@ -21,6 +21,9 @@ android {
 }
 
 dependencies {
-    // In-app QR scanner (no camera permission needed). Optional fallback to scanning with a camera app.
-    implementation 'com.google.android.gms:play-services-code-scanner:16.1.0'
+    // In-app QR scanner, bundled with the app (no Google Play services, no download)
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    // The scanner calls ContextCompat for its camera-permission check but doesn't bring AndroidX Core
+    // with it. (It used to arrive through the Google scanner library.)
+    implementation 'androidx.core:core:1.13.1'
 }
