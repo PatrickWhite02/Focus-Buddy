@@ -7,6 +7,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.format.DateFormat;
 
@@ -93,7 +96,8 @@ public final class ScheduleNotifier {
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification.Builder b = new Notification.Builder(c, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setSmallIcon(R.drawable.ic_stat_hat)
+                .setLargeIcon(appIcon(c))
                 .setContentTitle(title)
                 .setContentText(text)
                 .setCategory(Notification.CATEGORY_REMINDER)
@@ -104,6 +108,17 @@ public final class ScheduleNotifier {
             b.setTimeoutAfter(Math.max(1000L, startAt - System.currentTimeMillis()));
         }
         nm.notify(NOTIFICATION_ID, b.build());
+    }
+
+    /** The app's launcher icon as a bitmap, for the full-colour icon shown in the notification. */
+    private static Bitmap appIcon(Context c) {
+        Drawable d = c.getDrawable(R.mipmap.ic_launcher);
+        if (d == null) return null;
+        int size = (int) (64 * c.getResources().getDisplayMetrics().density);
+        Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        d.setBounds(0, 0, size, size);
+        d.draw(new Canvas(bmp));
+        return bmp;
     }
 
     private static String clock(long ms) {
