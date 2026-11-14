@@ -31,7 +31,7 @@ public class PermissionsActivity extends Activity {
     protected void onResume() {
         super.onResume();
         // Coming back from Settings lands here, so this is where we notice the permissions were granted
-        if (SessionStore.isActive(this)) {
+        if (SessionStore.isActive(this) && Permissions.accessibilityEnabled(this)) {
             startActivity(new Intent(this, ActiveBlockActivity.class));
             finish();
             return;
@@ -47,7 +47,11 @@ public class PermissionsActivity extends Activity {
         if (Permissions.needsNotificationPrompt(this)) {
             Permissions.requestNotifications(this, 1);
         }
-        tvSetup.setText("Accessibility service: " + (a11y ? "on ✓" : "off"));
+        tvSetup.setText(SessionStore.isActive(this)
+                ? "Your session is still running, but the accessibility service was turned off "
+                        + "(for example by a force stop), so nothing is being blocked. "
+                        + "Turn it back on to resume blocking."
+                : "Accessibility service: " + (a11y ? "on ✓" : "off"));
     }
 
     // ---------- Enabling accessibility (with the restricted-settings prompt) ----------

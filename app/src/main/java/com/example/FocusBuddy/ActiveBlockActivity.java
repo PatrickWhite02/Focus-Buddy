@@ -66,10 +66,19 @@ public class ActiveBlockActivity extends Activity {
         ui.removeCallbacks(tick);
     }
 
-    /** Once the block ends, hand back to the options screen. Returns true if we left. */
+    /**
+     * Once the block ends, hand back to the options screen. If the session is still running but
+     * Android has turned the accessibility service off (a force stop does that), nothing is being
+     * blocked, so send the user to the screen that turns it back on. Returns true if we left.
+     */
     private boolean routeIfNeeded() {
         if (!SessionStore.isActive(this)) {
             startActivity(new Intent(this, MainActivity.class));
+            finish();
+            return true;
+        }
+        if (!Permissions.accessibilityEnabled(this)) {
+            startActivity(new Intent(this, PermissionsActivity.class));
             finish();
             return true;
         }
