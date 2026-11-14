@@ -1,7 +1,6 @@
 TEST IMPLEMENTED FEATURES:
 todo: test the notification warnings
 todo: test the hardcore mode
-todo: add specific alarm permissions (for precise notifications)
 todo: add force stop prevention without the settings block. Probably just turn it back on when you re-open the app
 
 
