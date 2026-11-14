@@ -6,6 +6,10 @@ todo: test the new single "start session" screen
 todo: test the settings screen
 todo: test the hardcore mode
 todo: test the notification permission request
+todo: add specific alarm permissions (for precise notifications)
+todo: add "hour" and "minute" labels to the "start focus session" function that are visible even when values are present
+todo: reduce lag for showing the "closed" dialog
+todo: make it so that I can enable hardcore mode when a session is running, I just can't disable it
 
 NEW FEATURES:
 todo: improve the UI
@@ -13,7 +17,3 @@ todo: improve the UI
     landscape mode?
 todo: make the dialog box more frog themed? 
 todo: change name? 
-todo: add specific alarm permissions (for precise notifications)
-todo: add "hour" and "minute" labels to the "start focus session" function that are visible even when values are present
-todo: reduce lag for showing the "closed" dialog
-todo: make it so that I can enable hardcore mode when a session is running, I just can't disable it
