@@ -29,6 +29,15 @@ public final class BlocklistStore {
 
     private BlocklistStore() {}
 
+    /** For the accessibility service, to notice the blocklist changing. The listener must be kept referenced. */
+    public static void listen(Context c, SharedPreferences.OnSharedPreferenceChangeListener l) {
+        prefs(c).registerOnSharedPreferenceChangeListener(l);
+    }
+
+    public static void stopListening(Context c, SharedPreferences.OnSharedPreferenceChangeListener l) {
+        prefs(c).unregisterOnSharedPreferenceChangeListener(l);
+    }
+
     private static SharedPreferences prefs(Context c) {
         return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }

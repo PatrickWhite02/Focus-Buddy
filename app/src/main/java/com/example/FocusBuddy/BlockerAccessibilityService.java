@@ -13,6 +13,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -25,13 +26,32 @@ import android.widget.TextView;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class BlockerAccessibilityService extends AccessibilityService {
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private View overlay;
     private long lastOverlayAt = 0L;
+
+    private static final String TAG = "FocusBuddy";
+
+    // App names for the block dialog. Looking one up loads text out of the other app's resources,
+    // which for a big app can take a while, so they are loaded ahead of time on a background
+    // thread rather than at the moment the dialog is due.
+    private final Map<String, String> labelCache = new ConcurrentHashMap<>();
+    private final ExecutorService background = Executors.newSingleThreadExecutor();
+    private final SharedPreferences.OnSharedPreferenceChangeListener blocklistChanged =
+            (prefs, key) -> warmLabels();
+
+    // Busy apps fire a stream of "content changed" events. Looking at the screen is a call into
+    // the other app, so it is done at most this often for those events.
+    private static final long FOREGROUND_CHECK_GAP_MS = 250L;
+    private long lastForegroundCheckAt = 0L;
 
     // The browsers installed on the phone. Worked out once when the service starts, and again only
     // when an app is installed, updated or removed. Nothing but these packages is ever read for URLs.
@@ -85,7 +105,7 @@ public class BlockerAccessibilityService extends AccessibilityService {
         public void run() {
             if (SessionStore.isActive(BlockerAccessibilityService.this)) {
                 String pkg = foregroundPackage();
-                if (pkg != null) handlePackage(pkg);
+                if (pkg != null) handlePackage(pkg, true, 0L); // just read from the screen, so no need to confirm again
             }
             armNextWindowTimer();
         }
@@ -126,7 +146,31 @@ public class BlockerAccessibilityService extends AccessibilityService {
         pkgs.addDataScheme("package");
         registerReceiver(packagesChanged, pkgs);
         ScheduleStore.listen(this, scheduleChanged);
+        BlocklistStore.listen(this, blocklistChanged);
+        warmLabels();
         armNextWindowTimer();
+    }
+
+    /** Loads the names of all blocked apps in the background, ready for the block dialog. */
+    private void warmLabels() {
+        final Set<String> pkgs = BlocklistStore.get(this);
+        try {
+            background.execute(() -> {
+                for (String pkg : pkgs) {
+                    labelCache.put(pkg, BlocklistStore.labelFor(this, pkg));
+                }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException ignored) {
+            // service is shutting down
+        }
+    }
+
+    /** The app's name if it's ready; otherwise a generic one (and the name is loaded for next time). */
+    private String labelOf(String pkg) {
+        String label = labelCache.get(pkg);
+        if (label != null) return label;
+        warmLabels();
+        return "This app";
     }
 
     @Override
@@ -137,17 +181,33 @@ public class BlockerAccessibilityService extends AccessibilityService {
                 && event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             scheduleLeftBrowserCheck();
         }
-        handlePackage(pkg);
+        boolean windowChanged = event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
+        handlePackage(pkg, windowChanged, event.getEventTime());
     }
 
-    private void handlePackage(String pkg) {
+    /**
+     * @param windowChanged true if a window of {@code pkg} has just come to the front (or the
+     *                      screen was just read), so it needn't be confirmed by looking again
+     * @param eventTime     when the event was created (uptime), or 0
+     */
+    private void handlePackage(String pkg, boolean windowChanged, long eventTime) {
         if (pkg.equals(getPackageName()) || !SessionStore.isActive(this)) return;
 
         if (BlocklistStore.isBlocked(this, pkg)) {
-            // Only act if it's really the foreground window (ignores ghost events while animating out)
-            if (pkg.equals(foregroundPackage())) {
-                block(BlocklistStore.labelFor(this, pkg) + " is blocked",
+            // A window opening is a real arrival, so act straight away: confirming it means asking
+            // the app itself, which can take a long time if the app is busy starting up. Other
+            // events (content changing) can also come from an app that is animating out, so those
+            // are checked against what's actually in front.
+            if (windowChanged || isForeground(pkg)) {
+                long started = SystemClock.uptimeMillis();
+                block(labelOf(pkg) + " is blocked",
                         "Focus session in progress. Time to get back to what matters.");
+                if (eventTime > 0) {
+                    // To see where any delay comes from: how late the event reached us, versus our own work
+                    Log.d(TAG, pkg + " blocked: event reached us " + (started - eventTime)
+                            + " ms after it was created, handled in "
+                            + (SystemClock.uptimeMillis() - started) + " ms");
+                }
             }
         } else if (Config.SETTINGS_PACKAGES.contains(pkg) && Permissions.adminActive(this)
                 && settingsShowsUs()) {
@@ -156,6 +216,14 @@ public class BlockerAccessibilityService extends AccessibilityService {
         } else if (BlocklistStore.hasBlockedSites(this) && isBrowser(pkg)) {
             scheduleSiteCheck(pkg);
         }
+    }
+
+    /** True if {@code pkg} is the app in front, checked at most every FOREGROUND_CHECK_GAP_MS. */
+    private boolean isForeground(String pkg) {
+        long now = SystemClock.elapsedRealtime();
+        if (now - lastForegroundCheckAt < FOREGROUND_CHECK_GAP_MS) return false;
+        lastForegroundCheckAt = now;
+        return pkg.equals(foregroundPackage());
     }
 
     private boolean isBrowser(String pkg) {
@@ -424,6 +492,8 @@ public class BlockerAccessibilityService extends AccessibilityService {
         main.removeCallbacks(windowOpened);
         cancelGrace();
         ScheduleStore.stopListening(this, scheduleChanged);
+        BlocklistStore.stopListening(this, blocklistChanged);
+        background.shutdown();
         try {
             unregisterReceiver(screenOn);
             unregisterReceiver(packagesChanged);
