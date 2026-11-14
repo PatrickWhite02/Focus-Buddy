@@ -45,33 +45,33 @@
 
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
-            android:screenOrientation="unspecified"
+            android:screenOrientation="portrait"
             tools:replace="android:screenOrientation" />
-
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".PermissionsActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
-
         <activity
             android:name=".ActiveBlockActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
-
         <activity
             android:name=".SettingsActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
-
         <!-- configChanges: rotating the phone must not rebuild the screen and reset the clock/boxes -->
         <activity
             android:name=".StartSessionActivity"
+            android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="false" />
 
@@ -79,16 +79,18 @@
              or the bottom buttons ride up with it and then slide back down when it closes -->
         <activity
             android:name=".AppPickerActivity"
+            android:screenOrientation="portrait"
             android:exported="false"
             android:windowSoftInputMode="adjustNothing" />
 
         <activity
             android:name=".ScheduleActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
-
         <!-- The printed QR code encodes focusbuddy://unlock?token=... and lands here -->
         <activity
             android:name=".UnlockActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar">
@@ -99,7 +101,6 @@
                 <data android:scheme="focusbuddy" android:host="unlock" />
             </intent-filter>
         </activity>
-
         <service
             android:name=".BlockerAccessibilityService"
             android:exported="true"
