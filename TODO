@@ -10,6 +10,9 @@ todo: add specific alarm permissions (for precise notifications)
 todo: add "hour" and "minute" labels to the "start focus session" function that are visible even when values are present
 todo: reduce lag for showing the "closed" dialog
 todo: make it so that I can enable hardcore mode when a session is running, I just can't disable it
+todo: make the website icons populate more as a priority
+todo: add force stop prevention without the settings block. Probably just turn it back on when you re-open the app
+
 
 NEW FEATURES:
 todo: improve the UI
@@ -17,5 +20,3 @@ todo: improve the UI
     landscape mode?
 todo: make the dialog box more frog themed? 
 todo: change name? 
-todo: make the website icons populate more as a priority
-todo: add force stop prevention without the settings block. Probably just turn it back on when you re-open the app
