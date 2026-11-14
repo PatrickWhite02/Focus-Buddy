@@ -96,7 +96,7 @@ public final class ScheduleNotifier {
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification.Builder b = new Notification.Builder(c, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_stat_hat)
+                .setSmallIcon(R.drawable.ic_stat_frog)
                 .setLargeIcon(appIcon(c))
                 .setContentTitle(title)
                 .setContentText(text)
