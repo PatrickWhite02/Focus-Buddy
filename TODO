@@ -3,6 +3,7 @@ todo: test the scheduled blocks through hardcore/regular, and force stops
 
 
 NEW FEATURES:
+todo: buttons dissappear when I activate indefinite block
 todo: add a universal schedule? So every day, block at x intervals? 
 todo: let them edit the schedule during a block. Just don't let that disable the active one
 todo: allow extending the session while in one. Just can't shorten it
