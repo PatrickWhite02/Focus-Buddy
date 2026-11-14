@@ -24,6 +24,9 @@ public class StartSessionActivity extends Activity {
     /** A block can last up to 24 hours. */
     private static final long MAX_MINUTES = 24 * 60;
 
+    /** A one-off session lasts this long unless the person changes it. */
+    private static final int DEFAULT_MINUTES = 60;
+
     private TimePicker clock;
     private EditText hours, minutes;
 
@@ -48,10 +51,9 @@ public class StartSessionActivity extends Activity {
 
         clock.setIs24HourView(false); // 12-hour clock with an AM/PM selector
 
-        // Default: 3 hours from now, rounded up to the next quarter hour
+        // Default: a one-hour session
         Calendar def = Calendar.getInstance();
-        def.add(Calendar.HOUR_OF_DAY, 3);
-        def.add(Calendar.MINUTE, 15 - def.get(Calendar.MINUTE) % 15);
+        def.add(Calendar.MINUTE, DEFAULT_MINUTES);
         clock.setHour(def.get(Calendar.HOUR_OF_DAY));
         clock.setMinute(def.get(Calendar.MINUTE));
 
@@ -81,7 +83,12 @@ public class StartSessionActivity extends Activity {
         hours.addTextChangedListener(boxesToClock);
         minutes.addTextChangedListener(boxesToClock);
 
-        clockToBoxes(); // fill the boxes to match the default time
+        // Fill the boxes with the default length, and count from the moment Start is tapped
+        syncing = true;
+        hours.setText(String.valueOf(DEFAULT_MINUTES / 60));
+        minutes.setText(String.valueOf(DEFAULT_MINUTES % 60));
+        syncing = false;
+        byDuration = true;
 
         // "Block indefinitely": no timer at all, so grey out the clock and boxes
         final String timedNote = "The only way to end a session early is to scan the unlock QR code.";
