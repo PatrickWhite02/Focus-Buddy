@@ -1,16 +1,8 @@
 TEST IMPLEMENTED FEATURES:
 todo: test the notification warnings
-todo: test the new "block for x hours" feature
-todo: test new camera system
-todo: test the new single "start session" screen
-todo: test the settings screen
 todo: test the hardcore mode
 todo: test the notification permission request
 todo: add specific alarm permissions (for precise notifications)
-todo: add "hour" and "minute" labels to the "start focus session" function that are visible even when values are present
-todo: reduce lag for showing the "closed" dialog
-todo: make it so that I can enable hardcore mode when a session is running, I just can't disable it
-todo: make the website icons populate more as a priority
 todo: add force stop prevention without the settings block. Probably just turn it back on when you re-open the app
 
 
