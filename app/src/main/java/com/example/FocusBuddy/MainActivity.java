@@ -110,6 +110,7 @@ public class MainActivity extends Activity {
 
     private void askExactAlarmIfNeeded() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        if (!Permissions.exactAlarmsEnabled(this)) return; // switched off in Settings
         AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
         if (am.canScheduleExactAlarms()) return;
         new AlertDialog.Builder(this)

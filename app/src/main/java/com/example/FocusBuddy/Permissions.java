@@ -2,6 +2,7 @@ package com.example.FocusBuddy;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -96,5 +97,29 @@ public final class Permissions {
     public static boolean notificationsAllowed(Context c) {
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         return nm.areNotificationsEnabled();
+    }
+
+    // ---------- Settings switch: precise (exact-alarm) timing for those warnings ----------
+
+    private static final String KEY_EXACT_ENABLED = "exact_alarms_enabled";
+
+    /** The user's choice in Settings (on unless they switched it off). Says nothing about permission. */
+    public static boolean exactAlarmsEnabled(Context c) {
+        return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_EXACT_ENABLED, true);
+    }
+
+    /** Saves the choice and re-sets the warning alarm to match. */
+    public static void setExactAlarmsEnabled(Context c, boolean enabled) {
+        c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_EXACT_ENABLED, enabled).apply();
+        ScheduleNotifier.arm(c);
+    }
+
+    /** True if Android lets us set exact alarms: always before Android 12, a user-controlled permission after. */
+    public static boolean exactAlarmsAllowed(Context c) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true;
+        AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
+        return am.canScheduleExactAlarms();
     }
 }

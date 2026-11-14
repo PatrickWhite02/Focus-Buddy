@@ -7,10 +7,12 @@ import android.content.ComponentName;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.Button;
+import android.view.View;
 import android.widget.Switch;
 
 /**
@@ -21,7 +23,7 @@ import android.widget.Switch;
 public class SettingsActivity extends Activity {
 
     private Button btnChooseApps;
-    private Switch swHardcore, swNotices;
+    private Switch swHardcore, swNotices, swExact;
     private static final int REQ_NOTIFICATIONS = 1;
 
     @Override
@@ -32,12 +34,30 @@ public class SettingsActivity extends Activity {
         btnChooseApps = findViewById(R.id.btnChooseApps);
         swHardcore = findViewById(R.id.swHardcore);
         swNotices = findViewById(R.id.swNotices);
+        swExact = findViewById(R.id.swExact);
+        // Before Android 12 exact alarms are always allowed, so there's nothing to choose
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            findViewById(R.id.cardExact).setVisibility(View.GONE);
+        }
 
         btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
         findViewById(R.id.btnDone).setOnClickListener(v -> finishSettings());
 
         // Clicks, not checked-change listeners, so setting a switch from code (see refresh)
         // never triggers a dialog, a permission request or an admin removal.
+        swExact.setOnClickListener(v -> {
+            if (swExact.isChecked()) {
+                Permissions.setExactAlarmsEnabled(this, true);
+                if (!Permissions.exactAlarmsAllowed(this)) {
+                    // Android's own "Alarms & reminders" screen: only the user can grant this
+                    swExact.setChecked(false);
+                    startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                            Uri.parse("package:" + getPackageName())));
+                }
+            } else {
+                Permissions.setExactAlarmsEnabled(this, false);
+            }
+        });
         swNotices.setOnClickListener(v -> {
             if (swNotices.isChecked()) {
                 // Stays off until Android will really show our notifications
@@ -85,6 +105,9 @@ public class SettingsActivity extends Activity {
         swHardcore.setChecked(Permissions.adminActive(this));
         // On means: chosen here AND Android will show them (permission given, not blocked for the app)
         swNotices.setChecked(Permissions.noticesEnabled(this) && Permissions.notificationsAllowed(this));
+        // Same idea: chosen here AND allowed by Android
+        swExact.setChecked(Permissions.exactAlarmsEnabled(this) && Permissions.exactAlarmsAllowed(this));
+        ScheduleNotifier.arm(this); // picks up a permission just granted or taken away on Android's side
     }
 
     // ---------- Scheduled session notifications ----------

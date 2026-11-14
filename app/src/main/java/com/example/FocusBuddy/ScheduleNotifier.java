@@ -57,10 +57,11 @@ public final class ScheduleNotifier {
         PendingIntent pi = PendingIntent.getBroadcast(app, ALARM_REQUEST, intent,
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
-        // Exact alarms need a permission the user can switch off (Android 12+). Without it the
-        // notice still arrives, but Android may delay it by a few minutes.
+        // Exact alarms need the Settings switch on and a permission the user can revoke (Android 12+).
+        // Without them the notice still arrives, but Android may delay it by a few minutes.
         try {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()) {
+            if (Permissions.exactAlarmsEnabled(app)
+                    && (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms())) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next[0], pi);
                 return;
             }
