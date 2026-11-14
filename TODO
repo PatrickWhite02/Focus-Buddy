@@ -5,5 +5,6 @@ todo: test the scheduled blocks through hardcore/regular, and force stops
 NEW FEATURES:
 todo: add a universal schedule? So every day, block at x intervals? 
 todo: let them edit the schedule during a block. Just don't let that disable the active one
+todo: make it easy to disable upcoming scheduled sessions without outright deleting the entry. On home page and in alarms, just add a "disable upcoming alarm" thing
 todo: make the dialog box more frog themed? 
 todo: change name? 
