@@ -57,7 +57,7 @@ Scan the QR code using either Focus Buddy's built-in camera or your phone's defa
 
 ## Hardcore mode
 
-Off by default. Switch it on in Settings (a warning explains what it does, then Android asks you to activate Focus Buddy as a device administrator). While it's on:
+Off by default. Switch it on in Settings (a warning explains what it does, then Android asks you to activate Focus Buddy as a device administrator). You can also turn it on in the middle of a session: the running screen shows **Hardcore mode: Off** in red, and tapping it shows the same warning. Once it's on (shown in green) it can't be turned off until the block ends. While it's on:
 
 - Focus Buddy can't be uninstalled.
 - During a blocking session, Focus Buddy's pages in Android Settings (App info, Accessibility and Device admin) are locked, which makes it harder to force-stop the app or turn off the blocking service.

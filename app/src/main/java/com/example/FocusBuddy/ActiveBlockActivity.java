@@ -5,7 +5,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.graphics.Color;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.text.format.DateFormat;
 import android.util.TypedValue;
 import android.widget.TextView;
@@ -33,7 +37,7 @@ public class ActiveBlockActivity extends Activity {
         }
     };
 
-    private TextView tvStatus, tvCountdown;
+    private TextView tvStatus, tvCountdown, tvHardcore;
     private String blockedSummary = "";
 
     @Override
@@ -43,6 +47,8 @@ public class ActiveBlockActivity extends Activity {
 
         tvStatus = findViewById(R.id.tvStatus);
         tvCountdown = findViewById(R.id.tvCountdown);
+        tvHardcore = findViewById(R.id.tvHardcore);
+        tvHardcore.setOnClickListener(v -> HardcoreMode.showWarning(this, true));
         findViewById(R.id.btnScan).setOnClickListener(v -> scanToUnlock());
     }
 
@@ -70,7 +76,20 @@ public class ActiveBlockActivity extends Activity {
         return false;
     }
 
+    /** "Hardcore mode: Off" (red, tap to turn on) or "Hardcore mode: On" (green, no way to turn it off mid-block). */
+    private void renderHardcore() {
+        boolean on = Permissions.adminActive(this);
+        String label = "Hardcore mode: ";
+        String state = on ? "On" : "Off";
+        SpannableString text = new SpannableString(label + state);
+        text.setSpan(new ForegroundColorSpan(on ? Color.rgb(0x2E, 0x7D, 0x32) : Color.rgb(0xD3, 0x2F, 0x2F)),
+                label.length(), text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tvHardcore.setText(text);
+        tvHardcore.setClickable(!on); // once on, a tap does nothing
+    }
+
     private void render() {
+        renderHardcore(); // also picks up the admin being activated on Android's own screen
         tvStatus.setText("Session active. Blocked: " + blockedSummary);
         long release = SessionStore.scheduledReleaseMs(this);
         if (SessionStore.isUntilScan(this)) {

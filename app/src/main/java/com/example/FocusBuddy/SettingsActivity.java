@@ -72,7 +72,7 @@ public class SettingsActivity extends Activity {
             if (swHardcore.isChecked()) {
                 // Stays off until the user confirms and Android has really activated the admin
                 swHardcore.setChecked(false);
-                showHardcoreWarning();
+                HardcoreMode.showWarning(this, false);
             } else {
                 turnOffHardcore();
             }
@@ -150,28 +150,6 @@ public class SettingsActivity extends Activity {
     }
 
     // ---------- Hardcore mode ----------
-
-    private void showHardcoreWarning() {
-        new AlertDialog.Builder(this)
-                .setTitle("Turn on hardcore mode?")
-                .setMessage("Hardcore mode stops you from deleting Focus Buddy, and during a focus "
-                        + "session it stops you opening the app's pages in Android Settings, so "
-                        + "you can't force-stop it.\n\n"
-                        + "You can still delete the app, but only when no session is running and "
-                        + "hardcore mode is turned off here.")
-                .setPositiveButton("Turn on", (d, w) -> requestAdmin())
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    private void requestAdmin() {
-        Intent i = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-        i.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
-                new ComponentName(this, FocusAdminReceiver.class));
-        i.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                "Hardcore mode: stops Focus Buddy from being uninstalled or force-stopped during a focus session.");
-        startActivity(i);
-    }
 
     private void turnOffHardcore() {
         DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);

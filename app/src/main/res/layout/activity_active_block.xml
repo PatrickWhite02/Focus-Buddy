@@ -37,6 +37,19 @@
             android:fontFamily="@font/super_frog"
             android:textSize="48sp" />
 
+        <!-- Off (red): tap to turn on. On (green): stays on until the block ends. -->
+        <TextView
+            android:id="@+id/tvHardcore"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:fontFamily="@font/super_frog"
+            android:gravity="center"
+            android:padding="12dp"
+            android:textColor="@color/primary_dark"
+            android:textSize="22sp" />
+
         <Button
             android:id="@+id/btnScan"
             style="@style/BaseButtonStyle"
