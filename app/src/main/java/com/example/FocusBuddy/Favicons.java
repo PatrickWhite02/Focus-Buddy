@@ -51,17 +51,17 @@ public final class Favicons {
 
     private static Bitmap download(String host) {
         String base = "https://" + host + "/";
-        Bitmap bmp = decode(fetch(base + "favicon.ico", MAX_IMAGE_BYTES));
+        Bitmap bmp = decode(fetch(base + "favicon.ico", MAX_IMAGE_BYTES, false));
         if (bmp != null) return bmp;
 
         // No /favicon.ico: look for an icon the home page declares
-        byte[] html = fetch(base, MAX_HTML_BYTES);
+        byte[] html = fetch(base, MAX_HTML_BYTES, true);
         if (html == null) return null;
         for (String href : iconLinks(new String(html))) {
             try {
                 String url = new URL(new URL(base), href).toString();
                 if (!url.startsWith("https://")) continue;
-                bmp = decode(fetch(url, MAX_IMAGE_BYTES));
+                bmp = decode(fetch(url, MAX_IMAGE_BYTES, false));
                 if (bmp != null) return bmp;
             } catch (IOException ignored) {
                 // Bad link, try the next one
@@ -85,13 +85,17 @@ public final class Favicons {
         return out;
     }
 
-    private static byte[] fetch(String url, int maxBytes) {
+    /**
+     * @param truncate true for web pages: the icon link lives in the <head>, so keep the first
+     *                 maxBytes and stop reading. false for images: too big means unusable.
+     */
+    private static byte[] fetch(String url, int maxBytes, boolean truncate) {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setConnectTimeout(TIMEOUT_MS);
             conn.setReadTimeout(TIMEOUT_MS);
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Android) FocusBuddy");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Android) FocusBuddy/1.0 (+https://github.com/PatrickWhite02/Focus-Buddy)");
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) return null;
             try (InputStream in = conn.getInputStream()) {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -99,7 +103,7 @@ public final class Favicons {
                 int n;
                 while ((n = in.read(buf)) != -1) {
                     out.write(buf, 0, n);
-                    if (out.size() > maxBytes) return null;
+                    if (out.size() > maxBytes) return truncate ? out.toByteArray() : null;
                 }
                 return out.toByteArray();
             }

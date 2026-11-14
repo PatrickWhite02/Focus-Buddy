@@ -75,7 +75,7 @@ public class AppPickerActivity extends Activity {
     /** Website icons fetched so far, by host; sites missing from here show the browser icon. */
     private final Map<String, Drawable> favicons = new HashMap<>();
     private final Set<String> faviconRequested = new HashSet<>();
-    private final ExecutorService faviconWorker = Executors.newSingleThreadExecutor();
+    private final ExecutorService faviconWorker = Executors.newFixedThreadPool(3);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
