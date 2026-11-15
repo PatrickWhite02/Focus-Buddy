@@ -11,6 +11,7 @@ todo: make it easy to disable upcoming scheduled sessions without outright delet
 
 
 NEW FEATURES:
-todo: make a notification on failed uninstalls instructing them on what to do 
+todo: make a notification on failed uninstalls instructing them on what to do. Make the main activity tell them "can't uninstall until the session ends and you disable hardcore mode"
+todo: make an instruction tab in settings? 
 todo: make the dialog box more frog themed? 
 todo: change name? 
