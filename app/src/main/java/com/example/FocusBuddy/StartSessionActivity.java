@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.view.View;
@@ -146,20 +147,59 @@ public class StartSessionActivity extends Activity {
             onExtendClicked(indefinite);
             return;
         }
-        if (indefinite) {
-            SessionStore.startUntilScan(this);
-        } else if (byDuration) {
-            long total = totalMinutes();
-            if (total < 1 || total > MAX_MINUTES) {
-                Toast.makeText(this, "Enter a time between 1 minute and 24 hours", Toast.LENGTH_SHORT).show();
+        final long total = totalMinutes();
+        if (!indefinite && byDuration && (total < 1 || total > MAX_MINUTES)) {
+            Toast.makeText(this, "Enter a time between 1 minute and 24 hours", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        long previewEnd = 0L; // only for the warning: when the block will lift
+        if (!indefinite) {
+            previewEnd = byDuration
+                    ? System.currentTimeMillis() + total * 60_000L
+                    : nextOccurrenceMs(clock.getHour(), clock.getMinute());
+        }
+        confirmSession(indefinite, previewEnd, "Start", () -> {
+            if (SessionStore.isActive(this)) { // a scheduled session began while the warning was up
+                finish();
                 return;
             }
-            // The end time is set now, at the moment the session starts
-            SessionStore.startUntil(this, System.currentTimeMillis() + total * 60_000L);
+            if (indefinite) {
+                SessionStore.startUntilScan(this);
+            } else if (byDuration) {
+                // The end time is set now, at the moment the session starts
+                SessionStore.startUntil(this, System.currentTimeMillis() + total * 60_000L);
+            } else {
+                SessionStore.startUntil(this, nextOccurrenceMs(clock.getHour(), clock.getMinute()));
+            }
+            finish(); // back to the main screen, which now shows the running session
+        });
+    }
+
+    /**
+     * Warns what the session will lock, and that only the unlock QR code ends it early, before
+     * going ahead with {@code go}. A session with no timer gets the stronger wording.
+     */
+    private void confirmSession(boolean indefinite, long endMs, String goLabel, final Runnable go) {
+        String blocked = TextUtils.join(", ", BlocklistStore.labels(this));
+        String title;
+        String message;
+        if (indefinite) {
+            title = "This session has no timer";
+            message = "You won't be able to use " + blocked + " until you scan the unlock QR "
+                    + "code. Nothing else will end it, not even waiting.\n\n"
+                    + "Make sure you can get to your QR code before you start.";
         } else {
-            SessionStore.startUntil(this, nextOccurrenceMs(clock.getHour(), clock.getMinute()));
+            title = "Start this session?";
+            message = "You won't be able to use " + blocked + " until " + formatEnd(endMs) + ".\n\n"
+                    + "The only way to end it early is to scan the unlock QR code, so make sure "
+                    + "you can get to it.";
         }
-        finish(); // back to the main screen, which now shows the running session
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(goLabel, (d, w) -> go.run())
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     /** Makes the running session longer. An end time that isn't later than the current one is refused. */
@@ -170,8 +210,11 @@ public class StartSessionActivity extends Activity {
             return;
         }
         if (indefinite) {
-            SessionStore.startUntilScan(this); // longer than any end time
-            finish();
+            // Longer than any end time, so it gets the same warning as starting one with no timer
+            confirmSession(true, 0L, "Continue", () -> {
+                if (!SessionStore.isUntilScan(this)) SessionStore.startUntilScan(this);
+                finish();
+            });
             return;
         }
         long newEnd;

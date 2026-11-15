@@ -26,14 +26,14 @@ That's it for accessibility permissions.
 
 ### 2. Settings (first run)
 
-Once accessibility is on, Focus Buddy opens its **Settings** screen before the main screen. Choose what to block here, and optionally switch on **Hardcore mode** (see below). Tap **Done** when you're finished. After that, the app opens straight to the main screen, and Settings is always available from the gear icon in its top right corner.
+Once accessibility is on, Focus Buddy opens its **Settings** screen before the main screen. Choose what to block here, and optionally switch on **Hardcore mode** (see below). Tap **Done** when you're finished; the first time, a dialog reminds you to keep your unlock QR code within reach. After that, the app opens straight to the main screen, and Settings is always available from the gear icon in its top right corner.
 
 ## Using Focus Buddy
 
 1. Open Focus Buddy.
 2. Tap the gear icon (top right), then **Choose what to block** and switch on every app (social media, YouTube, web browsers...) you want blocked. To block a website, tap **Add website** and type its address (like `youtube.com`); it's added to the same list with a toggle, and you can hold a website's row to remove it. If nothing is selected, a red warning shows at the top of the main screen and **Start focus session** tells you to set it up first. During a session you can still add apps and websites, but anything already blocked can't be switched off or removed until it ends (those switches are greyed out).
 3. Tap **Start focus session**. A screen opens where you choose how long the block lasts, either way: set a time of day on the clock (it ends the next time the clock reaches it), or type a length in hours and minutes (up to 24 hours). The two stay in sync, so changing one updates the other. Or tick **Block indefinitely** (this greys out the clock and boxes): the block has no timer and lasts until you scan the unlock QR code, so make sure you can get to it first. With hours, the clock starts when you press **Start**, not when you type the number.
-4. Press **Start** on that screen (or **Cancel** to go back).
+4. Press **Start** on that screen (or **Cancel** to go back). A warning then lists what you won't be able to use and until when, and reminds you that only the unlock QR code ends a session early; for **Block indefinitely** it says plainly that nothing but the QR code will end it. Confirm to begin.
 
 While a session is running, the main screen stays the same screen with a few changes: it shows what's blocked and when the session ends (a countdown plus the end time, or "Blocked until 12:00 PM" for a scheduled one), **Start focus session** becomes **Extend session**, and a **Scan QR to end session** button appears. **Extend session** opens the same screen as starting one, but the end time can only move later: if you pick an earlier time, a message tells you the time it has to be after. Ticking **Block indefinitely** there makes the session last until the QR scan. A session that already has no end time can't be extended.
 

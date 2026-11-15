@@ -176,12 +176,23 @@ public class SettingsActivity extends Activity {
 
     /** The first visit (right after setup) is followed by the main screen, which isn't on the stack yet. */
     private void finishSettings() {
-        boolean firstRun = !Permissions.setupDone(this);
-        Permissions.markSetupDone(this);
-        if (firstRun) {
-            startActivity(new Intent(this, MainActivity.class));
+        if (Permissions.setupDone(this)) {
+            finish();
+            return;
         }
-        finish();
+        // First time through: make sure they know how a session gets ended early before they can start one
+        new AlertDialog.Builder(this)
+                .setTitle("Keep your QR code handy")
+                .setMessage("The only way to end a focus session early is to scan your unlock QR "
+                        + "code. Make sure you can get to it (printed out, or saved somewhere you "
+                        + "can reach) before you start a session, especially one with no timer.")
+                .setCancelable(false)
+                .setPositiveButton("I understand", (d, w) -> {
+                    Permissions.markSetupDone(this);
+                    startActivity(new Intent(this, MainActivity.class));
+                    finish();
+                })
+                .show();
     }
 
     @Override
