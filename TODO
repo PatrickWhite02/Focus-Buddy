@@ -2,13 +2,13 @@ TEST IMPLEMENTED FEATURES:
 todo: test the scheduled blocks through hardcore/regular, and force stops
 todo: buttons dissappear when I activate indefinite block
 todo: test the 'universal' tab in schedule
-
-
-NEW FEATURES:
 todo: let them edit the schedule during a block. Just don't let that disable the active one
 todo: allow extending the session while in one. Just can't shorten it
 todo: let them add more apps to the block mid-run. Just can't remove them
 todo: let them turn on harcore mode during s session, just can't turn it off
+
+
+NEW FEATURES:
 todo: make it easy to disable upcoming scheduled sessions without outright deleting the entry. On home page and in alarms, just add a "disable upcoming alarm" thing
 todo: make a strong warning to have the qr code accesible before first run? 
 todo: make the dialog box more frog themed? 
