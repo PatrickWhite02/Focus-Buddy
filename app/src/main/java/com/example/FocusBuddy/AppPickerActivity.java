@@ -11,6 +11,8 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +40,7 @@ import java.util.concurrent.Executors;
 /**
  * Lists the websites the user added (top) and the apps they have installed, including web
  * browsers, with a toggle each. Toggling adds/removes the item from the blocklist.
- * Not available during a session.
+ * During a session things can only be added: whatever is switched on stays on until it ends.
  */
 public class AppPickerActivity extends Activity {
 
@@ -63,8 +65,18 @@ public class AppPickerActivity extends Activity {
     private final Set<String> blockedSites = new HashSet<>();
     private Drawable browserIcon;
     private AppAdapter adapter;
-    private TextView tvCount, tvEmpty;
+    private TextView tvCount, tvEmpty, tvLockNote;
     private ListView list;
+    /** True while a session is running, when what's already blocked can't be unblocked. */
+    private boolean locked = false;
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private final Runnable lockTick = new Runnable() {
+        @Override
+        public void run() {
+            refreshLock(); // the session can end (or begin) while this screen is open
+            ui.postDelayed(this, 1000);
+        }
+    };
     /** "Loading apps" block at the end of the list: under any websites, where the apps will appear. */
     private View loadingFooter;
     private boolean footerAttached = false;
@@ -80,10 +92,12 @@ public class AppPickerActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (leaveIfSessionActive()) return;
         setContentView(R.layout.activity_app_picker);
 
         tvCount = findViewById(R.id.tvCount);
+        tvLockNote = findViewById(R.id.tvLockNote);
+        locked = SessionStore.isActive(this);
+        tvLockNote.setVisibility(locked ? View.VISIBLE : View.GONE);
         tvEmpty = findViewById(R.id.tvEmpty);
         list = findViewById(R.id.lvApps);
         // Not setEmptyView: it hides the whole list when there are no rows, and the loading footer lives in it
@@ -119,9 +133,16 @@ public class AppPickerActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        ui.removeCallbacks(lockTick);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        if (leaveIfSessionActive()) return;
+        refreshLock();
+        ui.postDelayed(lockTick, 1000);
         // Runs on first open and every time the user comes back to this screen (e.g. after
         // installing or uninstalling an app), so the list is always a fresh scan, never reused.
         reloadApps();
@@ -158,14 +179,13 @@ public class AppPickerActivity extends Activity {
         }).start();
     }
 
-    private boolean leaveIfSessionActive() {
-        if (SessionStore.isActive(this)) {
-            Toast.makeText(this, "You can't change the blocklist during a session",
-                    Toast.LENGTH_LONG).show();
-            finish();
-            return true;
-        }
-        return false;
+    /** Greys out (or frees up) the switches that can't be turned off when a session starts or ends. */
+    private void refreshLock() {
+        boolean now = SessionStore.isActive(this);
+        if (now == locked) return;
+        locked = now;
+        tvLockNote.setVisibility(locked ? View.VISIBLE : View.GONE);
+        adapter.notifyDataSetChanged();
     }
 
     // ---------- List state ----------
@@ -245,7 +265,13 @@ public class AppPickerActivity extends Activity {
     }
 
     private void toggle(Entry e) {
-        if (leaveIfSessionActive()) return;
+        boolean on = e.website ? blockedSites.contains(e.key) : blockedApps.contains(e.key);
+        if (on && SessionStore.isActive(this)) {
+            // Already blocked: it stays that way until the session ends
+            refreshLock();
+            Toast.makeText(this, "You can't unblock things during a session", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (e.website) {
             boolean now = !blockedSites.contains(e.key);
             if (now) blockedSites.add(e.key); else blockedSites.remove(e.key);
@@ -275,7 +301,6 @@ public class AppPickerActivity extends Activity {
     // ---------- Websites ----------
 
     private void showAddSiteDialog() {
-        if (leaveIfSessionActive()) return;
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         input.setHint("example.com");
@@ -286,7 +311,6 @@ public class AppPickerActivity extends Activity {
                 .setMessage("Browsers will be closed when they open this site (and its subdomains).")
                 .setView(input)
                 .setPositiveButton("Add", (d, which) -> {
-                    if (leaveIfSessionActive()) return;
                     String host = BlocklistStore.normalizeHost(input.getText().toString());
                     if (host == null) {
                         Toast.makeText(this, "That doesn't look like a website address",
@@ -302,11 +326,16 @@ public class AppPickerActivity extends Activity {
     }
 
     private void confirmRemoveSite(final String host) {
-        if (leaveIfSessionActive()) return;
+        if (blockedSites.contains(host) && SessionStore.isActive(this)) {
+            // A site that's switched on stays blocked until the session ends
+            Toast.makeText(this, "You can't remove a blocked website during a session",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
         new AlertDialog.Builder(this)
                 .setTitle("Remove " + host + "?")
                 .setPositiveButton("Remove", (d, which) -> {
-                    if (leaveIfSessionActive()) return;
+                    if (blockedSites.contains(host) && SessionStore.isActive(this)) return; // a session began meanwhile
                     BlocklistStore.removeSite(this, host);
                     blockedSites.remove(host);
                     rebuildRows();
@@ -415,9 +444,13 @@ public class AppPickerActivity extends Activity {
                 h.icon.setImageResource(android.R.drawable.ic_menu_search);
             }
             h.name.setText(e.label);
-            h.sub.setText(e.website ? "Website \u00b7 hold to remove" : e.key);
-            h.toggle.setChecked(
-                    e.website ? blockedSites.contains(e.key) : blockedApps.contains(e.key));
+            boolean on = e.website ? blockedSites.contains(e.key) : blockedApps.contains(e.key);
+            boolean stuck = locked && on; // blocked during a session: can't be switched off
+            h.sub.setText(e.website
+                    ? (stuck ? "Website \u00b7 locked during session" : "Website \u00b7 hold to remove")
+                    : e.key);
+            h.toggle.setChecked(on);
+            h.toggle.setEnabled(!stuck);
             // setChecked() animates the thumb on a row that's already on screen; a recycled row
             // would slide its switch while scrolling. Snap it to the right state instead.
             h.toggle.jumpDrawablesToCurrentState();

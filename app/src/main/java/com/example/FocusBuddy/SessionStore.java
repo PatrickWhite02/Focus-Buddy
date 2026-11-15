@@ -48,7 +48,12 @@ public final class SessionStore {
      * otherwise 0. Lets the UI say "Blocked until 12:00 PM" instead of showing a countdown.
      */
     public static long scheduledReleaseMs(Context c) {
-        long now = System.currentTimeMillis();
+        long release = chainedWindowEnd(c, System.currentTimeMillis());
+        return release > 0L && release >= prefs(c).getLong(KEY_END, 0L) ? release : 0L;
+    }
+
+    /** When the open scheduled window (and any that start exactly as it ends) finishes, or 0 if none is open. */
+    private static long chainedWindowEnd(Context c, long now) {
         long release = ScheduleStore.activeUntil(c, now);
         if (release <= now) return 0L;
         // A window that starts exactly when this one ends keeps the block going
@@ -57,7 +62,40 @@ public final class SessionStore {
             if (next <= release) break;
             release = next;
         }
-        return release >= prefs(c).getLong(KEY_END, 0L) ? release : 0L;
+        return release;
+    }
+
+    /**
+     * When the running session ends (ms since epoch): the manual end time or the end of the open
+     * scheduled window, whichever is later. Meaningless for a session that lasts until the QR scan
+     * (see isUntilScan) and for no session at all.
+     */
+    public static long endMs(Context c) {
+        return Math.max(prefs(c).getLong(KEY_END, 0L), chainedWindowEnd(c, System.currentTimeMillis()));
+    }
+
+    /**
+     * Makes the end of the running session independent of the schedule, by recording it as the
+     * session's own end time. Called before a scheduled window is removed mid-session, so that
+     * removing it can't cut the session short.
+     */
+    public static void pinCurrent(Context c) {
+        if (isUntilScan(c)) return;
+        long end = endMs(c);
+        if (end > System.currentTimeMillis()) {
+            prefs(c).edit().putLong(KEY_END, end).commit();
+        }
+    }
+
+    /**
+     * Makes the running session last until {@code newEndMs}. A session can only get longer: returns
+     * false, changing nothing, if that isn't later than the current end, or if there's no timed
+     * session to extend.
+     */
+    public static boolean extendTo(Context c, long newEndMs) {
+        if (!isActive(c) || isUntilScan(c) || newEndMs <= endMs(c)) return false;
+        prefs(c).edit().putLong(KEY_END, newEndMs).commit();
+        return true;
     }
 
     public static boolean isActive(Context c) {

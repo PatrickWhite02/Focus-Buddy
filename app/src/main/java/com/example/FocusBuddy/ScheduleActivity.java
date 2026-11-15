@@ -16,45 +16,36 @@ import java.util.List;
 
 /**
  * An "Everyday" banner followed by one banner per day of the week. The + opens a start/end time prompt; each window then shows under
- * its day with a trash can to remove it (no confirmation). Not available during a session.
+ * its day with a trash can to remove it (no confirmation). Also editable during a session, where
+ * changes never touch the session running now: they apply from the next time a window comes around.
  */
 public class ScheduleActivity extends Activity {
 
     private LinearLayout daysContainer;
-    private TextView tvHint;
+    private TextView tvHint, tvSessionNote;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (leaveIfSessionActive()) return;
         setContentView(R.layout.activity_schedule);
 
         daysContainer = findViewById(R.id.daysContainer);
         tvHint = findViewById(R.id.tvHint);
+        tvSessionNote = findViewById(R.id.tvSessionNote);
         findViewById(R.id.btnDone).setOnClickListener(v -> finish());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (leaveIfSessionActive()) return;
         tvHint.setVisibility(BlocklistStore.count(this) == 0 ? View.VISIBLE : View.GONE);
         renderDays();
-    }
-
-    private boolean leaveIfSessionActive() {
-        if (SessionStore.isActive(this)) {
-            Toast.makeText(this, "You can't change the schedule during a session",
-                    Toast.LENGTH_LONG).show();
-            finish();
-            return true;
-        }
-        return false;
     }
 
     // ---------- Days and their windows ----------
 
     private void renderDays() {
+        tvSessionNote.setVisibility(SessionStore.isActive(this) ? View.VISIBLE : View.GONE);
         daysContainer.removeAllViews();
         LayoutInflater inflater = getLayoutInflater();
         String[] names = DateFormatSymbols.getInstance().getWeekdays(); // indexed by Calendar.SUNDAY..SATURDAY
@@ -80,7 +71,6 @@ public class ScheduleActivity extends Activity {
             View row = inflater.inflate(R.layout.item_schedule_window, windows, false);
             ((TextView) row.findViewById(R.id.tvWindow)).setText(describe(w));
             row.findViewById(R.id.btnRemoveWindow).setOnClickListener(v -> {
-                if (leaveIfSessionActive()) return;
                 ScheduleStore.remove(this, w);
                 renderDays();
             });
@@ -105,7 +95,6 @@ public class ScheduleActivity extends Activity {
 
     /** Asks for a start time, then an end time. Cancelling either one adds nothing. */
     private void promptForWindow(final int day) {
-        if (leaveIfSessionActive()) return;
         final boolean use24h = DateFormat.is24HourFormat(this);
 
         TimePickerDialog startDialog = new TimePickerDialog(this, (view, startHour, startMinute) -> {
@@ -119,7 +108,6 @@ public class ScheduleActivity extends Activity {
                             Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if (leaveIfSessionActive()) return;
                 ScheduleStore.add(this, new ScheduleStore.Window(day, startMin, endMin));
                 renderDays();
             }, suggestedEnd / 60, suggestedEnd % 60, use24h);

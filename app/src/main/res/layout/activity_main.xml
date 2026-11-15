@@ -31,7 +31,6 @@
                 android:textColor="@color/primary_dark"
                 android:textSize="55sp" />
 
-            <!-- Not on the running screen: settings can't be changed during a session -->
             <ImageButton
                 android:id="@+id/btnSettings"
                 android:layout_width="48dp"
@@ -65,6 +64,31 @@
             android:fontFamily="@font/super_frog"
             android:textSize="16sp" />
 
+        <!-- Only while a session is running: the countdown, or when the block lifts -->
+        <TextView
+            android:id="@+id/tvCountdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/super_frog"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="@color/primary_dark"
+            android:textSize="48sp"
+            android:visibility="gone" />
+
+        <!-- Only while a timed session is running: the clock time the countdown reaches -->
+        <TextView
+            android:id="@+id/tvSessionEnds"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/super_frog"
+            android:gravity="center"
+            android:paddingBottom="24dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
         <!-- Hidden unless a scheduled block is coming up -->
         <TextView
             android:id="@+id/tvNextBlock"
@@ -82,10 +106,18 @@
             android:text="Scheduled sessions"
             />
 
+        <!-- "Extend session" while a session is running -->
         <Button
             android:id="@+id/btnStart"
             style="@style/BaseButtonStyle"
             android:text="Start focus session"
             />
+
+        <!-- Only while a session is running -->
+        <Button
+            android:id="@+id/btnScan"
+            style="@style/BaseButtonStyle"
+            android:text="Scan QR to end session"
+            android:visibility="gone" />
     </LinearLayout>
 </LinearLayout>

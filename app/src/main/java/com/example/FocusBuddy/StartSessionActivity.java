@@ -1,11 +1,13 @@
 package com.example.FocusBuddy;
 
 import android.app.Activity;
-import android.content.Intent;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -13,13 +15,20 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * The screen for choosing how long a block lasts: a clock for "until this time" and hours/minutes
  * boxes for "for this long" (the same thing said two ways, so changing one updates the other), or
  * "Block indefinitely" for a block that only the unlock QR code ends.
+ *
+ * Opened with EXTRA_EXTEND while a session is running, it is the same screen for making that
+ * session longer: the end time can only move later, never earlier.
  */
 public class StartSessionActivity extends Activity {
+
+    /** Boolean extra: extend the running session instead of starting a new one. */
+    public static final String EXTRA_EXTEND = "extend";
 
     /** A block can last up to 24 hours. */
     private static final long MAX_MINUTES = 24 * 60;
@@ -29,6 +38,7 @@ public class StartSessionActivity extends Activity {
 
     private TimePicker clock;
     private EditText hours, minutes;
+    private boolean extending;
 
     // Which control was touched last. The clock means "end at exactly this time"; the boxes
     // mean "run for this long from the moment Start is pressed".
@@ -40,6 +50,7 @@ public class StartSessionActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start_session);
+        extending = getIntent().getBooleanExtra(EXTRA_EXTEND, false);
 
         clock = findViewById(R.id.timePicker);
         hours = findViewById(R.id.etHours);
@@ -51,9 +62,20 @@ public class StartSessionActivity extends Activity {
 
         clock.setIs24HourView(false); // 12-hour clock with an AM/PM selector
 
-        // Default: a one-hour session
+        // Default: a one-hour session, or when extending, one more hour than the session has left
+        int defaultMinutes = DEFAULT_MINUTES;
+        if (extending) {
+            long leftMs = Math.max(0L, SessionStore.endMs(this) - System.currentTimeMillis());
+            defaultMinutes = (int) Math.min(MAX_MINUTES, (leftMs + 59_999L) / 60_000L + DEFAULT_MINUTES);
+            ((TextView) findViewById(R.id.tvTitle)).setText("Extend session");
+            ((Button) findViewById(R.id.btnStartSession)).setText("Extend");
+            TextView info = findViewById(R.id.tvExtendInfo);
+            info.setText("Blocked until " + formatEnd(SessionStore.endMs(this))
+                    + ". A running session can be made longer, never shorter.");
+            info.setVisibility(View.VISIBLE);
+        }
         Calendar def = Calendar.getInstance();
-        def.add(Calendar.MINUTE, DEFAULT_MINUTES);
+        def.add(Calendar.MINUTE, defaultMinutes);
         clock.setHour(def.get(Calendar.HOUR_OF_DAY));
         clock.setMinute(def.get(Calendar.MINUTE));
 
@@ -85,8 +107,8 @@ public class StartSessionActivity extends Activity {
 
         // Fill the boxes with the default length, and count from the moment Start is tapped
         syncing = true;
-        hours.setText(String.valueOf(DEFAULT_MINUTES / 60));
-        minutes.setText(String.valueOf(DEFAULT_MINUTES % 60));
+        hours.setText(String.valueOf(defaultMinutes / 60));
+        minutes.setText(String.valueOf(defaultMinutes % 60));
         syncing = false;
         byDuration = true;
 
@@ -110,16 +132,20 @@ public class StartSessionActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        // A session may have begun (a scheduled one), or the blocklist been emptied: nothing to start here then
-        if (SessionStore.isActive(this)) {
-            startActivity(new Intent(this, ActiveBlockActivity.class));
-            finish();
-        } else if (BlocklistStore.count(this) == 0) {
+        if (extending) {
+            // The session may have ended (or become one with no end time) while this was open: nothing to extend
+            if (!SessionStore.isActive(this) || SessionStore.isUntilScan(this)) finish();
+        } else if (SessionStore.isActive(this) || BlocklistStore.count(this) == 0) {
+            // A session may have begun (a scheduled one), or the blocklist been emptied: nothing to start here then
             finish();
         }
     }
 
     private void onStartClicked(boolean indefinite) {
+        if (extending) {
+            onExtendClicked(indefinite);
+            return;
+        }
         if (indefinite) {
             SessionStore.startUntilScan(this);
         } else if (byDuration) {
@@ -133,8 +159,69 @@ public class StartSessionActivity extends Activity {
         } else {
             SessionStore.startUntil(this, nextOccurrenceMs(clock.getHour(), clock.getMinute()));
         }
-        startActivity(new Intent(this, ActiveBlockActivity.class));
+        finish(); // back to the main screen, which now shows the running session
+    }
+
+    /** Makes the running session longer. An end time that isn't later than the current one is refused. */
+    private void onExtendClicked(boolean indefinite) {
+        if (!SessionStore.isActive(this) || SessionStore.isUntilScan(this)) {
+            Toast.makeText(this, "There's no timed session to extend", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+        if (indefinite) {
+            SessionStore.startUntilScan(this); // longer than any end time
+            finish();
+            return;
+        }
+        long newEnd;
+        if (byDuration) {
+            long total = totalMinutes();
+            if (total < 1 || total > MAX_MINUTES) {
+                Toast.makeText(this, "Enter a time between 1 minute and 24 hours", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            newEnd = System.currentTimeMillis() + total * 60_000L;
+        } else {
+            newEnd = nextOccurrenceMs(clock.getHour(), clock.getMinute());
+        }
+        if (!SessionStore.extendTo(this, newEnd)) {
+            showCantShortenDialog();
+            return;
+        }
         finish();
+    }
+
+    private void showCantShortenDialog() {
+        long currentEnd = SessionStore.endMs(this);
+        long leftMin = Math.max(1L, (currentEnd - System.currentTimeMillis() + 59_999L) / 60_000L);
+        new AlertDialog.Builder(this)
+                .setTitle("You can't shorten a session")
+                .setMessage("Pick a time after " + formatEnd(currentEnd)
+                        + " (" + describeMinutes(leftMin) + " from now).")
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    /** "1 hour 20 minutes", "2 hours", "45 minutes". */
+    private static String describeMinutes(long total) {
+        long h = total / 60;
+        long m = total % 60;
+        String hPart = h + (h == 1 ? " hour" : " hours");
+        String mPart = m + (m == 1 ? " minute" : " minutes");
+        return h == 0 ? mPart : m == 0 ? hPart : hPart + " " + mPart;
+    }
+
+    /** "12:00 PM" if it's today, otherwise with the weekday ("Tue 2:00 AM"). */
+    private String formatEnd(long endMs) {
+        Date end = new Date(endMs);
+        String time = DateFormat.getTimeFormat(this).format(end);
+        Calendar now = Calendar.getInstance();
+        Calendar then = Calendar.getInstance();
+        then.setTime(end);
+        boolean today = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
+                && now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR);
+        return today ? time : DateFormat.format("EEE", end) + " " + time;
     }
 
     private void clockToBoxes() {

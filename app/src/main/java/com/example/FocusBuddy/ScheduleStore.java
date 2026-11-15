@@ -32,11 +32,22 @@ public final class ScheduleStore {
         public final int day;       // Calendar.SUNDAY .. Calendar.SATURDAY, or EVERYDAY
         public final int startMin;  // minutes after midnight
         public final int endMin;    // an end at or before the start means it runs past midnight
+        /**
+         * Occurrences that began before this moment (ms) don't count. 0 for a window that was
+         * added with no session running; a window added mid-session gets the moment it was added,
+         * so it first applies the next time it comes around and can't touch the session running now.
+         */
+        final long since;
 
         public Window(int day, int startMin, int endMin) {
+            this(day, startMin, endMin, 0L);
+        }
+
+        Window(int day, int startMin, int endMin, long since) {
             this.day = day;
             this.startMin = startMin;
             this.endMin = endMin;
+            this.since = since;
         }
 
         public boolean overnight() {
@@ -44,13 +55,16 @@ public final class ScheduleStore {
         }
 
         String encode() {
-            return day + "," + startMin + "," + endMin;
+            return since == 0L
+                    ? day + "," + startMin + "," + endMin
+                    : day + "," + startMin + "," + endMin + "," + since;
         }
 
         static Window decode(String s) {
             try {
                 String[] p = s.split(",");
-                return new Window(Integer.parseInt(p[0]), Integer.parseInt(p[1]), Integer.parseInt(p[2]));
+                return new Window(Integer.parseInt(p[0]), Integer.parseInt(p[1]), Integer.parseInt(p[2]),
+                        p.length > 3 ? Long.parseLong(p[3]) : 0L);
             } catch (RuntimeException e) {
                 return null;
             }
@@ -81,13 +95,28 @@ public final class ScheduleStore {
         return out;
     }
 
+    /**
+     * Adds a window. Done while a session is running, it doesn't affect that session: the window
+     * first applies the next time it comes around (next week for a day, tomorrow for Everyday).
+     */
     public static void add(Context c, Window w) {
         Set<String> next = new HashSet<>(raw(c));
-        next.add(w.encode());
+        for (String s : next) {
+            Window e = Window.decode(s);
+            if (e != null && e.day == w.day && e.startMin == w.startMin && e.endMin == w.endMin) {
+                return; // already there
+            }
+        }
+        long since = SessionStore.isActive(c) ? System.currentTimeMillis() : 0L;
+        next.add(new Window(w.day, w.startMin, w.endMin, since).encode());
         prefs(c).edit().putStringSet(KEY_WINDOWS, next).apply();
     }
 
+    /** Removes a window. A session running right now carries on to its end even if this was its window. */
     public static void remove(Context c, Window w) {
+        if (SessionStore.isActive(c)) {
+            SessionStore.pinCurrent(c);
+        }
         Set<String> next = new HashSet<>(raw(c));
         next.remove(w.encode());
         prefs(c).edit().putStringSet(KEY_WINDOWS, next).apply();
@@ -136,6 +165,7 @@ public final class ScheduleStore {
 
         long s = start.getTimeInMillis();
         long e = end.getTimeInMillis();
+        if (s < w.since) return 0L; // an occurrence that began before the window was added
         return (now >= s && now < e && e > skipUntil) ? e : 0L;
     }
 

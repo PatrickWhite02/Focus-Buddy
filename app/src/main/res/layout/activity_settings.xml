@@ -19,6 +19,17 @@
             android:textColor="@color/primary_dark"
             android:textSize="55sp" />
 
+        <!-- Only while a session is running -->
+        <TextView
+            android:id="@+id/tvSessionNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:text="A session is running. You can add things to block and turn hardcore mode on, but nothing can be removed or turned off until it ends."
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
         <Button
             android:id="@+id/btnChooseApps"
             style="@style/BaseButtonStyle"

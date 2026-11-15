@@ -24,6 +24,17 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
+    <!-- Only while a session is running -->
+    <TextView
+        android:id="@+id/tvSessionNote"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:text="A session is running, so changes here won't affect it. Anything you add or remove applies from the next time it comes around (next week for a day, tomorrow for Everyday)."
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"

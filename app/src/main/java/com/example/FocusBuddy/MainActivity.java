@@ -12,15 +12,26 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.text.format.DateFormat;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
-/** Screen 2: the options (what to block, schedule, start a session). Only shown when ready and idle. */
+/**
+ * Screen 2: the options (what to block, schedule, start a session). Also the screen shown while a
+ * session is running, where it says when the block ends and swaps "Start focus session" for
+ * "Extend session" and adds the QR scan button.
+ */
 public class MainActivity extends Activity {
 
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -28,6 +39,7 @@ public class MainActivity extends Activity {
         @Override
         public void run() {
             if (!routeIfNeeded()) {
+                refresh(); // keeps the countdown moving, and notices a session starting or ending
                 ui.postDelayed(this, 1000);
             }
         }
@@ -37,8 +49,10 @@ public class MainActivity extends Activity {
     /** The notification / exact-alarm questions are asked at most once per visit to this screen. */
     private boolean askedNoticePermissions = false;
 
-    private TextView tvStatus, tvNextBlock, tvNoApps;
-    private Button btnSchedule, btnStart;
+    private TextView tvStatus, tvNextBlock, tvNoApps, tvCountdown, tvSessionEnds;
+    private Button btnSchedule, btnStart, btnScan;
+    /** What's blocked, as a sentence fragment. Looked up when the screen opens, not every second. */
+    private String blockedSummary = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,24 +62,29 @@ public class MainActivity extends Activity {
         tvStatus = findViewById(R.id.tvStatus);
         tvNextBlock = findViewById(R.id.tvNextBlock);
         tvNoApps = findViewById(R.id.tvNoApps);
+        tvCountdown = findViewById(R.id.tvCountdown);
+        tvSessionEnds = findViewById(R.id.tvSessionEnds);
         btnSchedule = findViewById(R.id.btnSchedule);
         btnStart = findViewById(R.id.btnStart);
+        btnScan = findViewById(R.id.btnScan);
 
         findViewById(R.id.btnSettings).setOnClickListener(
                 v -> startActivity(new Intent(this, SettingsActivity.class)));
         btnSchedule.setOnClickListener(v -> startActivity(new Intent(this, ScheduleActivity.class)));
         btnStart.setOnClickListener(v -> onStartClicked());
-
+        btnScan.setOnClickListener(v -> scanToUnlock());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (routeIfNeeded()) return;
+        // The blocklist can grow during a session (from Settings), so look it up each time we're shown
+        blockedSummary = TextUtils.join(", ", BlocklistStore.labels(this));
         refresh();
         ScheduleNotifier.arm(this); // also picks up an exact-alarm permission granted in Settings
         askNoticePermissionsIfNeeded();
-        // Keep checking so a scheduled block that starts while this screen is open moves us along
+        // Keep updating so a scheduled block that starts or ends while this screen is open shows up
         ui.postDelayed(tick, 1000);
     }
 
@@ -126,11 +145,8 @@ public class MainActivity extends Activity {
 
     /** Hands off to the right screen if this one isn't it. Returns true if we left. */
     private boolean routeIfNeeded() {
-        if (SessionStore.isActive(this)) {
-            startActivity(new Intent(this, ActiveBlockActivity.class));
-            finish();
-            return true;
-        }
+        // Also covers a running session whose accessibility service was turned off (a force stop
+        // does that): nothing is being blocked, so the setup screen turns it back on
         if (!Permissions.allGranted(this)) {
             startActivity(new Intent(this, PermissionsActivity.class));
             finish();
@@ -148,7 +164,7 @@ public class MainActivity extends Activity {
     private void refresh() {
         // Starting with nothing selected is allowed to be tapped: it explains what to do instead
         tvNoApps.setVisibility(BlocklistStore.count(this) == 0 ? View.VISIBLE : View.GONE);
-        tvStatus.setText("No session running.");
+        renderSession();
 
         long next = ScheduleStore.nextStartAfter(this, System.currentTimeMillis());
         if (next > 0L) {
@@ -157,6 +173,60 @@ public class MainActivity extends Activity {
         } else {
             tvNextBlock.setVisibility(View.GONE);
         }
+    }
+
+    /** The running session's details and buttons, or the idle state. */
+    private void renderSession() {
+        boolean active = SessionStore.isActive(this);
+        btnScan.setVisibility(active ? View.VISIBLE : View.GONE);
+        tvCountdown.setVisibility(active ? View.VISIBLE : View.GONE);
+        if (!active) {
+            tvStatus.setText("No session running.");
+            tvSessionEnds.setVisibility(View.GONE);
+            btnStart.setText("Start focus session");
+            btnStart.setEnabled(true);
+            btnStart.setAlpha(1f);
+            return;
+        }
+
+        tvStatus.setText("Session active. Blocked: " + blockedSummary);
+        boolean untilScan = SessionStore.isUntilScan(this);
+        // A session with no end time can't be made any longer
+        btnStart.setText("Extend session");
+        btnStart.setEnabled(!untilScan);
+        btnStart.setAlpha(untilScan ? 0.4f : 1f);
+
+        long release = SessionStore.scheduledReleaseMs(this);
+        if (untilScan) {
+            // No timer: say how it ends instead of counting down
+            tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f);
+            tvCountdown.setText("Blocked until you scan the QR code");
+            tvSessionEnds.setVisibility(View.GONE);
+        } else if (release > 0L) {
+            // Scheduled block: say when it lifts rather than counting down
+            tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f);
+            tvCountdown.setText("Blocked until\n" + formatEnd(release));
+            tvSessionEnds.setVisibility(View.GONE);
+        } else {
+            tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 48f);
+            long s = SessionStore.remainingMs(this) / 1000;
+            tvCountdown.setText(String.format(Locale.US, "%02d:%02d:%02d",
+                    s / 3600, (s % 3600) / 60, s % 60));
+            tvSessionEnds.setText("Ends at " + formatEnd(SessionStore.endMs(this)));
+            tvSessionEnds.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /** "12:00 PM" if it's today, otherwise with the weekday ("Tue 2:00 AM"). */
+    private String formatEnd(long endMs) {
+        Date end = new Date(endMs);
+        String time = DateFormat.getTimeFormat(this).format(end);
+        Calendar now = Calendar.getInstance();
+        Calendar then = Calendar.getInstance();
+        then.setTime(end);
+        boolean today = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
+                && now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR);
+        return today ? time : DateFormat.format("EEE", end) + " " + time;
     }
 
     /** "2:00 PM" if it's today, otherwise with the weekday ("Tue 2:00 PM"). */
@@ -171,11 +241,15 @@ public class MainActivity extends Activity {
         return today ? time : DateFormat.format("EEE", start) + " " + time;
     }
 
-    // ---------- Starting a session ----------
-
-    // ---------- Starting a session ----------
+    // ---------- Starting or extending a session ----------
 
     private void onStartClicked() {
+        if (SessionStore.isActive(this)) {
+            // Same screen as starting one, but the end time can only be moved later
+            startActivity(new Intent(this, StartSessionActivity.class)
+                    .putExtra(StartSessionActivity.EXTRA_EXTEND, true));
+            return;
+        }
         if (BlocklistStore.count(this) == 0) {
             new AlertDialog.Builder(this)
                     .setTitle("Nothing to block yet")
@@ -189,5 +263,28 @@ public class MainActivity extends Activity {
             return;
         }
         startActivity(new Intent(this, StartSessionActivity.class));
+    }
+
+    // ---------- Ending a session with the in-app scanner ----------
+    // (Scanning the printed QR with any camera app also works; it fires the same focusbuddy:// intent.)
+
+    private void scanToUnlock() {
+        new IntentIntegrator(this)
+                .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+                .setPrompt("Scan your unlock QR code")
+                .setBeepEnabled(false)
+                .setOrientationLocked(false)
+                .initiateScan();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != IntentIntegrator.REQUEST_CODE) return;
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result == null || result.getContents() == null) return; // cancelled, or camera denied
+        boolean ok = SessionStore.unlockFromLink(this, result.getContents());
+        Toast.makeText(this, ok ? "Session ended" : "Wrong QR code", Toast.LENGTH_LONG).show();
+        refresh();
     }
 }

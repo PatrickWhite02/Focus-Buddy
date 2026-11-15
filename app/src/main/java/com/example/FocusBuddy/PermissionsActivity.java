@@ -31,11 +31,6 @@ public class PermissionsActivity extends Activity {
     protected void onResume() {
         super.onResume();
         // Coming back from Settings lands here, so this is where we notice the permissions were granted
-        if (SessionStore.isActive(this) && Permissions.accessibilityEnabled(this)) {
-            startActivity(new Intent(this, ActiveBlockActivity.class));
-            finish();
-            return;
-        }
         boolean a11y = Permissions.accessibilityEnabled(this);
         if (a11y) {
             startActivity(new Intent(this, MainActivity.class));
