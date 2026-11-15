@@ -21,8 +21,10 @@
             android:textSize="40sp" />
 
         <!-- The clock and boxes, with an invisible layer on top that soaks up touches while
-             "Block indefinitely" is ticked (the clock face ignores setEnabled) -->
-        <FrameLayout
+             "Block indefinitely" is ticked (the clock face ignores setEnabled).
+             RelativeLayout, not FrameLayout: the layer is sized by aligning it to the controls,
+             so it can never stretch this block and push the checkbox and buttons off screen -->
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp">
@@ -116,11 +118,13 @@
             <View
                 android:id="@+id/timeBlocker"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@id/timeControls"
+                android:layout_alignBottom="@id/timeControls"
                 android:clickable="true"
                 android:focusable="true"
                 android:visibility="gone" />
-        </FrameLayout>
+        </RelativeLayout>
 
         <CheckBox
             android:id="@+id/cbIndefinite"
