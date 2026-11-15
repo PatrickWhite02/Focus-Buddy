@@ -15,7 +15,7 @@ import java.util.Calendar;
 import java.util.List;
 
 /**
- * One banner per day of the week. The + opens a start/end time prompt; each window then shows under
+ * An "Everyday" banner followed by one banner per day of the week. The + opens a start/end time prompt; each window then shows under
  * its day with a trash can to remove it (no confirmation). Not available during a session.
  */
 public class ScheduleActivity extends Activity {
@@ -60,27 +60,33 @@ public class ScheduleActivity extends Activity {
         String[] names = DateFormatSymbols.getInstance().getWeekdays(); // indexed by Calendar.SUNDAY..SATURDAY
         int first = Calendar.getInstance().getFirstDayOfWeek();
 
+        // Windows on this card repeat every day; they're kept apart from the individual days' windows
+        addDayCard(inflater, "Everyday", ScheduleStore.EVERYDAY);
+
         for (int i = 0; i < 7; i++) {
-            final int day = ((first - 1 + i) % 7) + 1;
-
-            View card = inflater.inflate(R.layout.item_schedule_day, daysContainer, false);
-            ((TextView) card.findViewById(R.id.tvDayName)).setText(names[day]);
-            card.findViewById(R.id.btnAddWindow).setOnClickListener(v -> promptForWindow(day));
-
-            LinearLayout windows = card.findViewById(R.id.windowsContainer);
-            List<ScheduleStore.Window> forDay = ScheduleStore.forDay(this, day);
-            for (final ScheduleStore.Window w : forDay) {
-                View row = inflater.inflate(R.layout.item_schedule_window, windows, false);
-                ((TextView) row.findViewById(R.id.tvWindow)).setText(describe(w));
-                row.findViewById(R.id.btnRemoveWindow).setOnClickListener(v -> {
-                    if (leaveIfSessionActive()) return;
-                    ScheduleStore.remove(this, w);
-                    renderDays();
-                });
-                windows.addView(row);
-            }
-            daysContainer.addView(card);
+            int day = ((first - 1 + i) % 7) + 1;
+            addDayCard(inflater, names[day], day);
         }
+    }
+
+    private void addDayCard(LayoutInflater inflater, String name, final int day) {
+        View card = inflater.inflate(R.layout.item_schedule_day, daysContainer, false);
+        ((TextView) card.findViewById(R.id.tvDayName)).setText(name);
+        card.findViewById(R.id.btnAddWindow).setOnClickListener(v -> promptForWindow(day));
+
+        LinearLayout windows = card.findViewById(R.id.windowsContainer);
+        List<ScheduleStore.Window> forDay = ScheduleStore.forDay(this, day);
+        for (final ScheduleStore.Window w : forDay) {
+            View row = inflater.inflate(R.layout.item_schedule_window, windows, false);
+            ((TextView) row.findViewById(R.id.tvWindow)).setText(describe(w));
+            row.findViewById(R.id.btnRemoveWindow).setOnClickListener(v -> {
+                if (leaveIfSessionActive()) return;
+                ScheduleStore.remove(this, w);
+                renderDays();
+            });
+            windows.addView(row);
+        }
+        daysContainer.addView(card);
     }
 
     private String describe(ScheduleStore.Window w) {

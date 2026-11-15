@@ -22,11 +22,14 @@ public final class ScheduleStore {
     private static final String KEY_WINDOWS = "windows";
     private static final String KEY_SKIP_UNTIL = "skip_until";
 
+    /** Day value for the "Everyday" card: a window that repeats on every day of the week. */
+    public static final int EVERYDAY = 0;
+
     private ScheduleStore() {}
 
-    /** One window on one day of the week. */
+    /** One window on one day of the week (or on every day, see EVERYDAY). */
     public static final class Window {
-        public final int day;       // Calendar.SUNDAY .. Calendar.SATURDAY
+        public final int day;       // Calendar.SUNDAY .. Calendar.SATURDAY, or EVERYDAY
         public final int startMin;  // minutes after midnight
         public final int endMin;    // an end at or before the start means it runs past midnight
 
@@ -108,10 +111,10 @@ public final class ScheduleStore {
         for (String s : all) {
             Window w = Window.decode(s);
             if (w == null) continue;
-            if (w.day == today) {
+            if (w.day == today || w.day == EVERYDAY) {
                 best = Math.max(best, endIfOpen(cal, w, 0, now, skipUntil));
             }
-            if (w.day == yesterday && w.overnight()) {
+            if ((w.day == yesterday || w.day == EVERYDAY) && w.overnight()) {
                 best = Math.max(best, endIfOpen(cal, w, 1, now, skipUntil));
             }
         }
@@ -154,7 +157,7 @@ public final class ScheduleStore {
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(now);
             cal.add(Calendar.DAY_OF_YEAR, ahead);
-            if (cal.get(Calendar.DAY_OF_WEEK) != w.day) continue;
+            if (w.day != EVERYDAY && cal.get(Calendar.DAY_OF_WEEK) != w.day) continue;
             cal.set(Calendar.HOUR_OF_DAY, w.startMin / 60);
             cal.set(Calendar.MINUTE, w.startMin % 60);
             cal.set(Calendar.SECOND, 0);
