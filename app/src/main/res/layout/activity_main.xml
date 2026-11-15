@@ -94,10 +94,19 @@
             android:id="@+id/tvNextBlock"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="24dp"
             android:fontFamily="@font/super_frog"
             android:textColor="@color/primary_dark"
             android:textSize="16sp"
+            android:visibility="gone" />
+
+        <!-- Unticking skips just that upcoming block; the schedule itself is kept -->
+        <CheckBox
+            android:id="@+id/cbNextEnabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:checked="true"
+            android:text="Enable"
             android:visibility="gone" />
 
         <Button

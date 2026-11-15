@@ -16,7 +16,9 @@ import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.util.TypedValue;
 import android.view.View;
+import android.graphics.Paint;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,6 +53,9 @@ public class MainActivity extends Activity {
 
     private TextView tvStatus, tvNextBlock, tvNoApps, tvCountdown, tvSessionEnds;
     private Button btnSchedule, btnStart, btnScan;
+    private CheckBox cbNextEnabled;
+    /** Start time (ms) of the upcoming scheduled block the checkbox is for. */
+    private long shownNextStart = 0L;
     /** What's blocked, as a sentence fragment. Looked up when the screen opens, not every second. */
     private String blockedSummary = "";
 
@@ -67,12 +72,20 @@ public class MainActivity extends Activity {
         btnSchedule = findViewById(R.id.btnSchedule);
         btnStart = findViewById(R.id.btnStart);
         btnScan = findViewById(R.id.btnScan);
+        cbNextEnabled = findViewById(R.id.cbNextEnabled);
 
         findViewById(R.id.btnSettings).setOnClickListener(
                 v -> startActivity(new Intent(this, SettingsActivity.class)));
         btnSchedule.setOnClickListener(v -> startActivity(new Intent(this, ScheduleActivity.class)));
         btnStart.setOnClickListener(v -> onStartClicked());
         btnScan.setOnClickListener(v -> scanToUnlock());
+        // A click listener, not a checked-change one, so refresh() setting the box never triggers it
+        cbNextEnabled.setOnClickListener(v -> {
+            if (shownNextStart > 0L) {
+                ScheduleStore.setOccurrenceDisabled(this, shownNextStart, !cbNextEnabled.isChecked());
+            }
+            refresh();
+        });
     }
 
     @Override
@@ -166,12 +179,25 @@ public class MainActivity extends Activity {
         tvNoApps.setVisibility(BlocklistStore.count(this) == 0 ? View.VISIBLE : View.GONE);
         renderSession();
 
-        long next = ScheduleStore.nextStartAfter(this, System.currentTimeMillis());
+        // The next occurrence whether or not it's switched off, so a switched-off one stays here to be switched back on
+        long next = ScheduleStore.nextOccurrenceAfter(this, System.currentTimeMillis());
+        shownNextStart = next;
         if (next > 0L) {
+            boolean enabled = !ScheduleStore.isOccurrenceDisabled(this, next);
             tvNextBlock.setText("Next scheduled block: " + formatStart(next));
             tvNextBlock.setVisibility(View.VISIBLE);
+            // Switched off: greyed out and crossed out
+            tvNextBlock.setAlpha(enabled ? 1f : 0.4f);
+            if (enabled) {
+                tvNextBlock.setPaintFlags(tvNextBlock.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
+            } else {
+                tvNextBlock.setPaintFlags(tvNextBlock.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            }
+            cbNextEnabled.setChecked(enabled);
+            cbNextEnabled.setVisibility(View.VISIBLE);
         } else {
             tvNextBlock.setVisibility(View.GONE);
+            cbNextEnabled.setVisibility(View.GONE);
         }
     }
 

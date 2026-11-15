@@ -21,6 +21,7 @@ public final class ScheduleStore {
     private static final String PREFS = "focus_schedule";
     private static final String KEY_WINDOWS = "windows";
     private static final String KEY_SKIP_UNTIL = "skip_until";
+    private static final String KEY_DISABLED = "disabled_starts"; // start times (ms) of occurrences switched off
 
     /** Day value for the "Everyday" card: a window that repeats on every day of the week. */
     public static final int EVERYDAY = 0;
@@ -141,16 +142,16 @@ public final class ScheduleStore {
             Window w = Window.decode(s);
             if (w == null) continue;
             if (w.day == today || w.day == EVERYDAY) {
-                best = Math.max(best, endIfOpen(cal, w, 0, now, skipUntil));
+                best = Math.max(best, endIfOpen(c, cal, w, 0, now, skipUntil));
             }
             if ((w.day == yesterday || w.day == EVERYDAY) && w.overnight()) {
-                best = Math.max(best, endIfOpen(cal, w, 1, now, skipUntil));
+                best = Math.max(best, endIfOpen(c, cal, w, 1, now, skipUntil));
             }
         }
         return best;
     }
 
-    private static long endIfOpen(Calendar nowCal, Window w, int daysBack, long now, long skipUntil) {
+    private static long endIfOpen(Context c, Calendar nowCal, Window w, int daysBack, long now, long skipUntil) {
         Calendar start = (Calendar) nowCal.clone();
         start.add(Calendar.DAY_OF_YEAR, -daysBack);
         start.set(Calendar.HOUR_OF_DAY, w.startMin / 60);
@@ -166,11 +167,71 @@ public final class ScheduleStore {
         long s = start.getTimeInMillis();
         long e = end.getTimeInMillis();
         if (s < w.since) return 0L; // an occurrence that began before the window was added
-        return (now >= s && now < e && e > skipUntil) ? e : 0L;
+        if (!(now >= s && now < e && e > skipUntil)) return 0L;
+        return isOccurrenceDisabled(c, s) ? 0L : e; // only looked up for a window that's open right now
     }
 
     /** When the next window opens after {@code now} (ms), or 0 if nothing is scheduled. */
     public static long nextStartAfter(Context c, long now) {
+        long best = 0L;
+        for (String s : raw(c)) {
+            Window w = Window.decode(s);
+            if (w == null) continue;
+            long t = nextEnabledStart(c, w, now);
+            if (t > 0L && (best == 0L || t < best)) best = t;
+        }
+        return best;
+    }
+
+    /** The first time after {@code now} that this window opens, skipping occurrences switched off. */
+    private static long nextEnabledStart(Context c, Window w, long now) {
+        Set<Long> off = disabledStarts(c);
+        long t = startAfter(w, now);
+        for (int i = 0; i < 60 && t > 0L && off.contains(t); i++) {
+            t = startAfter(w, t); // that one is switched off: the one after it
+        }
+        return t;
+    }
+
+    // ---------- Switching a single upcoming occurrence off, without touching the window itself ----------
+
+    private static Set<Long> disabledStarts(Context c) {
+        Set<Long> out = new HashSet<>();
+        for (String s : prefs(c).getStringSet(KEY_DISABLED, Collections.<String>emptySet())) {
+            try {
+                out.add(Long.parseLong(s));
+            } catch (NumberFormatException ignored) {
+                // skip a damaged entry
+            }
+        }
+        return out;
+    }
+
+    /** True if the occurrence of a window that starts at {@code startMs} has been switched off. */
+    public static boolean isOccurrenceDisabled(Context c, long startMs) {
+        return disabledStarts(c).contains(startMs);
+    }
+
+    /**
+     * Switches one occurrence (identified by its start time) off or back on. The window itself is
+     * untouched, so it still starts at its next occurrence. Two windows that open at exactly the
+     * same moment are switched off together.
+     */
+    public static void setOccurrenceDisabled(Context c, long startMs, boolean disabled) {
+        Set<String> next = new HashSet<>();
+        long now = System.currentTimeMillis();
+        for (long t : disabledStarts(c)) {
+            if (t > now && t != startMs) next.add(String.valueOf(t)); // drops ones already in the past
+        }
+        if (disabled && startMs > now) next.add(String.valueOf(startMs));
+        prefs(c).edit().putStringSet(KEY_DISABLED, next).apply();
+    }
+
+    /**
+     * When the next window opens after {@code now} (ms), whether or not that occurrence has been
+     * switched off, or 0 if nothing is scheduled. For showing it on the main screen.
+     */
+    public static long nextOccurrenceAfter(Context c, long now) {
         long best = 0L;
         for (String s : raw(c)) {
             Window w = Window.decode(s);
@@ -208,7 +269,7 @@ public final class ScheduleStore {
         for (String s : raw(c)) {
             Window w = Window.decode(s);
             if (w == null) continue;
-            long start = startAfter(w, now);
+            long start = nextEnabledStart(c, w, now);
             if (start == 0L) continue;
             for (int m : minutesBefore) {
                 long fire = start - m * 60_000L;

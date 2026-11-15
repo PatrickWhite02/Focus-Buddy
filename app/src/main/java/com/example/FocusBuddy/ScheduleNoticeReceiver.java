@@ -17,7 +17,8 @@ public class ScheduleNoticeReceiver extends BroadcastReceiver {
         long startAt = intent.getLongExtra(EXTRA_START_AT, 0L);
         int minutes = intent.getIntExtra(EXTRA_MINUTES, -1);
 
-        if (startAt > 0L && minutes >= 0) {
+        // An occurrence switched off on the main screen sends no notifications at all
+        if (startAt > 0L && minutes >= 0 && !ScheduleStore.isOccurrenceDisabled(context, startAt)) {
             // A warning is skipped if it arrived too late to be a warning, or if a block is already
             // running (e.g. this window follows straight on from the previous one).
             boolean pointless = minutes > 0 && (now >= startAt || SessionStore.isActive(context));
