@@ -1,9 +1,10 @@
 TEST IMPLEMENTED FEATURES:
 todo: test the scheduled blocks through hardcore/regular, and force stops
+todo: buttons dissappear when I activate indefinite block
+todo: test the 'universal' tab in schedule
 
 
 NEW FEATURES:
-todo: buttons dissappear when I activate indefinite block
 todo: let them edit the schedule during a block. Just don't let that disable the active one
 todo: allow extending the session while in one. Just can't shorten it
 todo: let them add more apps to the block mid-run. Just can't remove them
