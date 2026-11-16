@@ -13,5 +13,6 @@ todo: make an instruction tab in settings?
 
 
 NEW FEATURES:
+todo: customize the dialog for killing the settings page and uninstall page to alert the user they can't while hardcore mode is active. Scan the qr code to disable the session to access the settings, disable hardcore to uninstall 
 todo: make the dialog box more frog themed? 
 todo: change name? 
