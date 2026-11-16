@@ -8,10 +8,10 @@ todo: let them add more apps to the block mid-run. Just can't remove them
 todo: let them turn on harcore mode during s session, just can't turn it off
 todo: make a strong warning to have the qr code accesible before first run? 
 todo: make it easy to disable upcoming scheduled sessions without outright deleting the entry. On home page and in alarms, just add a "disable upcoming alarm" thing
+todo: Make the main activity tell them "can't uninstall until the session ends and you disable hardcore mode"
+todo: make an instruction tab in settings?
 
 
 NEW FEATURES:
-todo: make a notification on failed uninstalls instructing them on what to do. Make the main activity tell them "can't uninstall until the session ends and you disable hardcore mode"
-todo: make an instruction tab in settings? 
 todo: make the dialog box more frog themed? 
 todo: change name? 
