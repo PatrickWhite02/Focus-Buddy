@@ -89,6 +89,18 @@
             android:textSize="18sp"
             android:visibility="gone" />
 
+        <!-- Only while a session is running with hardcore mode on: why uninstalling is blocked -->
+        <TextView
+            android:id="@+id/tvHardcoreNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingBottom="24dp"
+            android:text="You won't be able to uninstall Focus Buddy until this session ends, because hardcore mode is enabled. To uninstall, turn off hardcore mode in Settings after the session, then uninstall normally."
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
         <!-- Hidden unless a scheduled block is coming up -->
         <TextView
             android:id="@+id/tvNextBlock"

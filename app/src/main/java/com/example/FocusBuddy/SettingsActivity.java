@@ -27,6 +27,7 @@ public class SettingsActivity extends Activity {
     private Button btnChooseApps;
     private Switch swHardcore, swNotices, swExact;
     private TextView tvSessionNote;
+    private AlertDialog howItWorksDialog;
     private static final int REQ_NOTIFICATIONS = 1;
 
     @Override
@@ -46,6 +47,7 @@ public class SettingsActivity extends Activity {
 
         btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
         findViewById(R.id.btnDone).setOnClickListener(v -> finishSettings());
+        findViewById(R.id.btnHowItWorks).setOnClickListener(v -> showHowItWorks());
 
         // Clicks, not checked-change listeners, so setting a switch from code (see refresh)
         // never triggers a dialog, a permission request or an admin removal.
@@ -101,6 +103,37 @@ public class SettingsActivity extends Activity {
             return;
         }
         refresh();
+        // First run only: Settings is opened once during setup, before the main screen
+        if (!Permissions.setupDone(this) && !Permissions.howItWorksSeen(this)) {
+            showHowItWorks();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (howItWorksDialog != null) {
+            // Being destroyed (e.g. rotation) isn't the user dismissing it, so don't mark it seen
+            howItWorksDialog.setOnDismissListener(null);
+            howItWorksDialog.dismiss();
+        }
+    }
+
+    // ---------- "How it works" ----------
+
+    /** The short intro. Shown automatically on first run, and again from the "How it works" button. */
+    private void showHowItWorks() {
+        if (howItWorksDialog != null && howItWorksDialog.isShowing()) return;
+        howItWorksDialog = new AlertDialog.Builder(this)
+                .setTitle("How Focus Buddy works")
+                .setMessage("During a focus session you set up, Focus Buddy closes the apps and "
+                        + "websites you chose to block.\n\n"
+                        + "Hardcore mode also stops you from uninstalling or force-stopping "
+                        + "Focus Buddy while a session is running.")
+                .setPositiveButton("Got it", null)
+                // Counts as seen however it's closed (button, back, or tapping outside)
+                .setOnDismissListener(d -> Permissions.markHowItWorksSeen(this))
+                .show();
     }
 
     private void refresh() {

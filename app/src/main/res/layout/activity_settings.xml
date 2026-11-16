@@ -153,6 +153,12 @@
         </LinearLayout>
 
         <Button
+            android:id="@+id/btnHowItWorks"
+            style="@style/BaseButtonStyle"
+            android:layout_marginTop="16dp"
+            android:text="How it works" />
+
+        <Button
             android:id="@+id/btnDone"
             style="@style/BaseButtonStyle"
             android:layout_marginTop="16dp"

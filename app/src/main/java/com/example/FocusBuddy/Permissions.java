@@ -53,6 +53,20 @@ public final class Permissions {
                 .edit().putBoolean(KEY_SETUP_DONE, true).apply();
     }
 
+    // ---------- "How it works" intro: shown once, the first time Settings opens during setup ----------
+
+    private static final String KEY_HOW_IT_WORKS_SEEN = "how_it_works_seen";
+
+    public static boolean howItWorksSeen(Context c) {
+        return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_HOW_IT_WORKS_SEEN, false);
+    }
+
+    public static void markHowItWorksSeen(Context c) {
+        c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_HOW_IT_WORKS_SEEN, true).apply();
+    }
+
     // ---------- Notifications (Android 13+), asked once when the app is first opened ----------
 
     private static final String PREFS = "focus_permissions";
