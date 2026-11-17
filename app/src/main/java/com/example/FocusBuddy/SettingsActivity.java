@@ -42,6 +42,10 @@ public class SettingsActivity extends Activity {
         swNotices = findViewById(R.id.swNotices);
         swExact = findViewById(R.id.swExact);
         swCamera = findViewById(R.id.swCamera);
+        // Only offered when the camera isn't allowed. Decided once, when Settings opens, so the card
+        // stays put while the user is in here (even after they allow it) and is gone the next visit.
+        findViewById(R.id.cardCamera).setVisibility(
+                PermissionPrompts.cameraGranted(this) ? View.GONE : View.VISIBLE);
         // Before Android 12 exact alarms are always allowed, so there's nothing to choose
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             findViewById(R.id.cardExact).setVisibility(View.GONE);
