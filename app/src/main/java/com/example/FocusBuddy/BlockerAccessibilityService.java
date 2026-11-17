@@ -40,6 +40,11 @@ public class BlockerAccessibilityService extends AccessibilityService {
 
     private static final String TAG = "FocusBuddy";
 
+    // The class of the Settings screen that last came to the front (e.g. ...DeviceAdminAdd). Only
+    // a window-state event carries it (later events carry a view's class), so it is remembered
+    // here to tell the device admin / uninstall screen apart from the other Settings pages.
+    private String settingsScreenClass = "";
+
     // App names for the block dialog. Looking one up loads text out of the other app's resources,
     // which for a big app can take a while, so they are loaded ahead of time on a background
     // thread rather than at the moment the dialog is due.
@@ -182,6 +187,11 @@ public class BlockerAccessibilityService extends AccessibilityService {
             scheduleLeftBrowserCheck();
         }
         boolean windowChanged = event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
+        if (windowChanged && Config.SETTINGS_PACKAGES.contains(pkg) && event.getClassName() != null) {
+            String cls = event.getClassName().toString();
+            // android.* / androidx.* classes are dialogs and popups over a screen, not screens
+            if (!cls.startsWith("android")) settingsScreenClass = cls;
+        }
         handlePackage(pkg, windowChanged, event.getEventTime());
     }
 
@@ -211,8 +221,20 @@ public class BlockerAccessibilityService extends AccessibilityService {
             }
         } else if (Config.SETTINGS_PACKAGES.contains(pkg) && Permissions.adminActive(this)
                 && settingsShowsUs()) {
-            // Only in hardcore mode (device admin active)
-            block("Settings locked", "You can't change Focus Buddy's settings during a session.");
+            // Only in hardcore mode (device admin active) during a session
+            if (isDeviceAdminScreen()) {
+                // Where Android sends you after a refused uninstall, and where the admin is switched off
+                block("Can't uninstall Focus Buddy",
+                        "You can't uninstall Focus Buddy when hardcore mode is on during a focus "
+                                + "session.\n\nOnce the session ends you'll be able to uninstall it "
+                                + "the way you just tried, or turn off hardcore mode in Focus Buddy's "
+                                + "settings and uninstall it normally.");
+            } else {
+                // App info (force stop), Accessibility...
+                block("Settings locked",
+                        "You can't change Focus Buddy's settings when hardcore mode is on during a "
+                                + "focus session.\n\nScan your unlock QR code to end the session first.");
+            }
         } else if (BlocklistStore.hasBlockedSites(this) && isBrowser(pkg)) {
             scheduleSiteCheck(pkg);
         }
@@ -398,6 +420,18 @@ public class BlockerAccessibilityService extends AccessibilityService {
         if (root == null || root.getPackageName() == null) return false;
         if (!Config.SETTINGS_PACKAGES.contains(root.getPackageName().toString())) return false;
         return !root.findAccessibilityNodeInfosByText(getString(R.string.app_name)).isEmpty();
+    }
+
+    /**
+     * True if the Settings screen in front is the device admin one (the "Device admin apps" list or
+     * the page that deactivates an admin), as opposed to App info, Accessibility, etc. The screen's
+     * class name is checked first since it doesn't depend on the phone's language; the text is a
+     * fallback for the list, which some Android versions show inside a generic Settings screen.
+     */
+    private boolean isDeviceAdminScreen() {
+        if (settingsScreenClass.toLowerCase(java.util.Locale.ROOT).contains("deviceadmin")) return true;
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        return root != null && !root.findAccessibilityNodeInfosByText("device admin").isEmpty();
     }
 
     private void block(String title, String message) {
