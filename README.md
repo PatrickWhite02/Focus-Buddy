@@ -4,9 +4,9 @@ Focus Buddy is an Android productivity app that blocks access to social media ap
 
 ## Installation
 
-When installing the app, Android will display a warning because the app isn't recognized by Google Play Protect. You will need to tap **Install anyway** to proceed. Alternatively, make a local build if you don't trust me :) it should plug into Android Studio without fuss.
+When installing the app, Android will display a warning because the app isn't recognized by Google Play Protect. You will need to tap **Install anyway** to proceed. 
 
-Or just use the gradlew file included to build an apk (assuming you have gradle installed):
+Alternatively, make a local build if you don't trust me :) it should plug into Android Studio without fuss. Or just use the gradlew file included to build an apk (assuming you have gradle installed):
 - **Windows CMD:** `gradlew.bat assembleDebug`
 - **Windows PowerShell:** `.\gradlew.bat assembleDebug`
 - **Linux:** `./gradlew assembleDebug`
