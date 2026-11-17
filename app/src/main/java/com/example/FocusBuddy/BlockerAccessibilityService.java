@@ -498,10 +498,7 @@ public class BlockerAccessibilityService extends AccessibilityService {
         try {
             WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
             wm.addView(root, lp);
-            overlay = root;
-            main.postDelayed(() -> {
-                if (overlay == root) dismissOverlay();
-            }, 4000);
+            overlay = root; // stays until the user taps OK
         } catch (Exception ignored) {
             // If the overlay fails, the app still gets closed by GLOBAL_ACTION_HOME
         }
