@@ -10,9 +10,9 @@ todo: make a strong warning to have the qr code accesible before first run?
 todo: make it easy to disable upcoming scheduled sessions without outright deleting the entry. On home page and in alarms, just add a "disable upcoming alarm" thing
 todo: Make the main activity tell them "can't uninstall until the session ends and you disable hardcore mode"
 todo: make an instruction tab in settings?
+todo: customize the dialog for killing the settings page and uninstall page to alert the user they can't while hardcore mode is active. Scan the qr code to disable the session to access the settings, disable hardcore to uninstall 
 
 
 NEW FEATURES:
-todo: customize the dialog for killing the settings page and uninstall page to alert the user they can't while hardcore mode is active. Scan the qr code to disable the session to access the settings, disable hardcore to uninstall 
 todo: make the dialog box more frog themed? 
 todo: change name? 
