@@ -25,10 +25,11 @@ import android.widget.TextView;
 public class SettingsActivity extends Activity {
 
     private Button btnChooseApps;
-    private Switch swHardcore, swNotices, swExact;
+    private Switch swHardcore, swNotices, swExact, swCamera;
     private TextView tvSessionNote;
     private AlertDialog howItWorksDialog;
     private static final int REQ_NOTIFICATIONS = 1;
+    private static final int REQ_CAMERA = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +41,7 @@ public class SettingsActivity extends Activity {
         swHardcore = findViewById(R.id.swHardcore);
         swNotices = findViewById(R.id.swNotices);
         swExact = findViewById(R.id.swExact);
+        swCamera = findViewById(R.id.swCamera);
         // Before Android 12 exact alarms are always allowed, so there's nothing to choose
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             findViewById(R.id.cardExact).setVisibility(View.GONE);
@@ -71,6 +73,19 @@ public class SettingsActivity extends Activity {
                 enableNotices();
             } else {
                 Permissions.setNoticesEnabled(this, false);
+            }
+        });
+
+        swCamera.setOnClickListener(v -> {
+            if (swCamera.isChecked()) {
+                // Stays off until Android has really allowed it
+                swCamera.setChecked(false);
+                requestPermissions(new String[] {Manifest.permission.CAMERA}, REQ_CAMERA);
+            } else {
+                // An app can't take back its own permission; only Android's settings can
+                swCamera.setChecked(true);
+                showCameraSettingsDialog("Android only lets you turn the camera off in its own "
+                        + "settings for Focus Buddy.");
             }
         });
 
@@ -152,6 +167,8 @@ public class SettingsActivity extends Activity {
         swNotices.setChecked(Permissions.noticesEnabled(this) && Permissions.notificationsAllowed(this));
         // Same idea: chosen here AND allowed by Android
         swExact.setChecked(Permissions.exactAlarmsEnabled(this) && Permissions.exactAlarmsAllowed(this));
+        // On means Android is letting the in-app scanner use the camera
+        swCamera.setChecked(PermissionPrompts.cameraGranted(this));
         ScheduleNotifier.arm(this); // picks up a permission just granted or taken away on Android's side
     }
 
@@ -173,6 +190,16 @@ public class SettingsActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_CAMERA) {
+            if (PermissionPrompts.cameraGranted(this)) {
+                refresh();
+            } else {
+                // Declined (after a second decline Android stops asking, so this is the only route left)
+                showCameraSettingsDialog("Android isn't letting Focus Buddy ask for the camera. "
+                        + "Open its settings and allow the camera, then switch this on again.");
+            }
+            return;
+        }
         if (requestCode != REQ_NOTIFICATIONS) return;
         if (Permissions.notificationsAllowed(this)) {
             refresh();
@@ -192,6 +219,26 @@ public class SettingsActivity extends Activity {
                                 .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName())))
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    // ---------- Camera ----------
+
+    private void showCameraSettingsDialog(String message) {
+        AlertDialog.Builder b = new AlertDialog.Builder(this).setTitle("Camera permission");
+        if (SessionStore.isActive(this) && Permissions.adminActive(this)) {
+            // Android's settings for this app are closed during a hardcore session
+            b.setMessage("Focus Buddy's settings in Android are locked while hardcore mode is on "
+                    + "during a session, so the camera can't be changed right now. You can change "
+                    + "it once the session ends.")
+                    .setPositiveButton("OK", null);
+        } else {
+            b.setMessage(message)
+                    .setPositiveButton("Open settings", (d, w) -> startActivity(
+                            new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.parse("package:" + getPackageName()))))
+                    .setNegativeButton("Cancel", null);
+        }
+        b.show();
     }
 
     // ---------- Hardcore mode ----------

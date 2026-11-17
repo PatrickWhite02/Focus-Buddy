@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
     };
 
     private static final int REQ_NOTIFICATIONS = 1;
+    private PermissionPrompts prompts;
     /** The notification / exact-alarm questions are asked at most once per visit to this screen. */
     private boolean askedNoticePermissions = false;
 
@@ -63,6 +64,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        prompts = new PermissionPrompts(this);
 
         tvStatus = findViewById(R.id.tvStatus);
         tvNextBlock = findViewById(R.id.tvNextBlock);
@@ -135,6 +137,7 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (prompts.onResult(requestCode)) return;
         if (requestCode == REQ_NOTIFICATIONS && !isFinishing()
                 && ScheduleStore.nextStartAfter(this, System.currentTimeMillis()) != 0L) {
             askExactAlarmIfNeeded();
@@ -291,19 +294,22 @@ public class MainActivity extends Activity {
                     .show();
             return;
         }
-        startActivity(new Intent(this, StartSessionActivity.class));
+        // With hardcore mode on, the camera can't be turned on once the session is running (Settings
+        // is locked), so this is the last chance to ask for it. Without hardcore mode nothing is asked.
+        prompts.run(false, () -> startActivity(new Intent(this, StartSessionActivity.class)));
     }
 
     // ---------- Ending a session with the in-app scanner ----------
     // (Scanning the printed QR with any camera app also works; it fires the same focusbuddy:// intent.)
 
     private void scanToUnlock() {
-        new IntentIntegrator(this)
+        // The scanner needs the camera: ask for it (and offer Android's settings) if it isn't allowed
+        prompts.scan(() -> new IntentIntegrator(this)
                 .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
                 .setPrompt("Scan your unlock QR code")
                 .setBeepEnabled(false)
                 .setOrientationLocked(false)
-                .initiateScan();
+                .initiateScan());
     }
 
     @Override

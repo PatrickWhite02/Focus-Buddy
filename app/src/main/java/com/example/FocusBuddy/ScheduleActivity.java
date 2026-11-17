@@ -23,11 +23,15 @@ public class ScheduleActivity extends Activity {
 
     private LinearLayout daysContainer;
     private TextView tvHint, tvSessionNote;
+    private PermissionPrompts prompts;
+    /** The notification (and, with hardcore mode on, camera) questions are asked at most once per visit. */
+    private boolean permissionsChecked = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_schedule);
+        prompts = new PermissionPrompts(this);
 
         daysContainer = findViewById(R.id.daysContainer);
         tvHint = findViewById(R.id.tvHint);
@@ -40,6 +44,12 @@ public class ScheduleActivity extends Activity {
         super.onResume();
         tvHint.setVisibility(BlocklistStore.count(this) == 0 ? View.VISIBLE : View.GONE);
         renderDays();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        prompts.onResult(requestCode);
     }
 
     // ---------- Days and their windows ----------
@@ -63,7 +73,7 @@ public class ScheduleActivity extends Activity {
     private void addDayCard(LayoutInflater inflater, String name, final int day) {
         View card = inflater.inflate(R.layout.item_schedule_day, daysContainer, false);
         ((TextView) card.findViewById(R.id.tvDayName)).setText(name);
-        card.findViewById(R.id.btnAddWindow).setOnClickListener(v -> promptForWindow(day));
+        card.findViewById(R.id.btnAddWindow).setOnClickListener(v -> onAddWindowClicked(day));
 
         LinearLayout windows = card.findViewById(R.id.windowsContainer);
         List<ScheduleStore.Window> forDay = ScheduleStore.forDay(this, day);
@@ -92,6 +102,18 @@ public class ScheduleActivity extends Activity {
     }
 
     // ---------- Adding a window ----------
+
+    /** Before a window is added: notifications (the warnings) and, with hardcore mode on, the camera. */
+    private void onAddWindowClicked(final int day) {
+        if (permissionsChecked) {
+            promptForWindow(day);
+            return;
+        }
+        prompts.run(true, () -> {
+            permissionsChecked = true;
+            promptForWindow(day);
+        });
+    }
 
     /** Asks for a start time, then an end time. Cancelling either one adds nothing. */
     private void promptForWindow(final int day) {
