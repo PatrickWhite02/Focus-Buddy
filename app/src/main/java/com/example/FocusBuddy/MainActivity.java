@@ -71,7 +71,6 @@ public class MainActivity extends Activity {
         tvNoApps = findViewById(R.id.tvNoApps);
         tvCountdown = findViewById(R.id.tvCountdown);
         tvSessionEnds = findViewById(R.id.tvSessionEnds);
-        tvHardcoreNote = findViewById(R.id.tvHardcoreNote);
         btnSchedule = findViewById(R.id.btnSchedule);
         btnStart = findViewById(R.id.btnStart);
         btnScan = findViewById(R.id.btnScan);
@@ -210,8 +209,6 @@ public class MainActivity extends Activity {
         boolean active = SessionStore.isActive(this);
         btnScan.setVisibility(active ? View.VISIBLE : View.GONE);
         tvCountdown.setVisibility(active ? View.VISIBLE : View.GONE);
-        // Hardcore mode is "device admin is active"; during a session it's what blocks uninstalling
-        tvHardcoreNote.setVisibility(active && Permissions.adminActive(this) ? View.VISIBLE : View.GONE);
         if (!active) {
             tvStatus.setText("No session running.");
             tvSessionEnds.setVisibility(View.GONE);
