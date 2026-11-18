@@ -41,6 +41,8 @@ import java.util.concurrent.Executors;
  * Lists the websites the user added (top) and the apps they have installed, including web
  * browsers, with a toggle each. Toggling adds/removes the item from the blocklist.
  * During a session things can only be added: whatever is switched on stays on until it ends.
+ * The one exception is anything switched on during the current visit to this screen, which can
+ * still be switched off until the user leaves it.
  */
 public class AppPickerActivity extends Activity {
 
@@ -69,6 +71,12 @@ public class AppPickerActivity extends Activity {
     private ListView list;
     /** True while a session is running, when what's already blocked can't be unblocked. */
     private boolean locked = false;
+    /**
+     * Lock keys (see {@link #lockKey}) of things switched on during this visit while a session was
+     * running. They aren't committed yet, so they can still be switched off; anything else that is
+     * on stays locked. Cleared whenever a session begins or ends, and gone when the screen closes.
+     */
+    private final Set<String> addedThisVisit = new HashSet<>();
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Runnable lockTick = new Runnable() {
         @Override
@@ -184,6 +192,7 @@ public class AppPickerActivity extends Activity {
         boolean now = SessionStore.isActive(this);
         if (now == locked) return;
         locked = now;
+        addedThisVisit.clear(); // whatever was on when a session begins is part of it
         tvLockNote.setVisibility(locked ? View.VISIBLE : View.GONE);
         adapter.notifyDataSetChanged();
     }
@@ -264,14 +273,26 @@ public class AppPickerActivity extends Activity {
         }
     }
 
+    /** Apps and websites share one set, so a package name and a host can never be mistaken for each other. */
+    private static String lockKey(Entry e) {
+        return (e.website ? "site:" : "app:") + e.key;
+    }
+
+    /** True if a session is running and this (already blocked) item was on before this visit began. */
+    private boolean isLockedOn(String lockKey) {
+        return SessionStore.isActive(this) && !addedThisVisit.contains(lockKey);
+    }
+
     private void toggle(Entry e) {
         boolean on = e.website ? blockedSites.contains(e.key) : blockedApps.contains(e.key);
-        if (on && SessionStore.isActive(this)) {
+        if (on && isLockedOn(lockKey(e))) {
             // Already blocked: it stays that way until the session ends
             refreshLock();
             Toast.makeText(this, "You can't unblock things during a session", Toast.LENGTH_SHORT).show();
             return;
         }
+        // Switched on mid-session: remember it, so it can be switched off again until this screen closes
+        if (!on && SessionStore.isActive(this)) addedThisVisit.add(lockKey(e));
         if (e.website) {
             boolean now = !blockedSites.contains(e.key);
             if (now) blockedSites.add(e.key); else blockedSites.remove(e.key);
@@ -319,6 +340,7 @@ public class AppPickerActivity extends Activity {
                     }
                     BlocklistStore.addSite(this, host);
                     blockedSites.add(host);
+                    if (SessionStore.isActive(this)) addedThisVisit.add("site:" + host);
                     rebuildRows();
                 })
                 .setNegativeButton("Cancel", null)
@@ -326,7 +348,7 @@ public class AppPickerActivity extends Activity {
     }
 
     private void confirmRemoveSite(final String host) {
-        if (blockedSites.contains(host) && SessionStore.isActive(this)) {
+        if (blockedSites.contains(host) && isLockedOn("site:" + host)) {
             // A site that's switched on stays blocked until the session ends
             Toast.makeText(this, "You can't remove a blocked website during a session",
                     Toast.LENGTH_SHORT).show();
@@ -335,9 +357,10 @@ public class AppPickerActivity extends Activity {
         new AlertDialog.Builder(this)
                 .setTitle("Remove " + host + "?")
                 .setPositiveButton("Remove", (d, which) -> {
-                    if (blockedSites.contains(host) && SessionStore.isActive(this)) return; // a session began meanwhile
+                    if (blockedSites.contains(host) && isLockedOn("site:" + host)) return; // a session began meanwhile
                     BlocklistStore.removeSite(this, host);
                     blockedSites.remove(host);
+                    addedThisVisit.remove("site:" + host);
                     rebuildRows();
                 })
                 .setNegativeButton("Cancel", null)
@@ -445,7 +468,8 @@ public class AppPickerActivity extends Activity {
             }
             h.name.setText(e.label);
             boolean on = e.website ? blockedSites.contains(e.key) : blockedApps.contains(e.key);
-            boolean stuck = locked && on; // blocked during a session: can't be switched off
+            // Blocked during a session: can't be switched off, unless it was only switched on during this visit
+            boolean stuck = locked && on && !addedThisVisit.contains(lockKey(e));
             h.sub.setText(e.website
                     ? (stuck ? "Website \u00b7 locked during session" : "Website \u00b7 hold to remove")
                     : e.key);

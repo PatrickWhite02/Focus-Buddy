@@ -29,7 +29,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="12dp"
-        android:text="A session is running. You can add apps and websites to block, but anything already blocked stays blocked until it ends."
+        android:text="A session is running. You can add apps and websites to block. Anything already blocked stays blocked until it ends, except things you switch on during this visit, which you can still switch off until you leave this screen."
         android:textColor="@color/text_secondary"
         android:textSize="14sp"
         android:visibility="gone" />
