@@ -291,8 +291,7 @@ public class MainActivity extends Activity {
                     .show();
             return;
         }
-        // With hardcore mode on, the camera can't be turned on once the session is running (Settings
-        // is locked), so this is the last chance to ask for it. Without hardcore mode nothing is asked.
+        // Nothing to ask here: the camera is only requested when the Scan QR button is pressed.
         prompts.run(false, () -> startActivity(new Intent(this, StartSessionActivity.class)));
     }
 

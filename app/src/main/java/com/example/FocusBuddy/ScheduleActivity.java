@@ -24,7 +24,7 @@ public class ScheduleActivity extends Activity {
     private LinearLayout daysContainer;
     private TextView tvHint, tvSessionNote;
     private PermissionPrompts prompts;
-    /** The notification (and, with hardcore mode on, camera) questions are asked at most once per visit. */
+    /** The notification question is asked at most once per visit. */
     private boolean permissionsChecked = false;
 
     @Override
@@ -103,7 +103,7 @@ public class ScheduleActivity extends Activity {
 
     // ---------- Adding a window ----------
 
-    /** Before a window is added: notifications (the warnings) and, with hardcore mode on, the camera. */
+    /** Before a window is added: notifications (the warnings). */
     private void onAddWindowClicked(final int day) {
         if (permissionsChecked) {
             promptForWindow(day);
