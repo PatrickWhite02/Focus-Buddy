@@ -16,5 +16,6 @@ todo: test the new permission request flow
 
 NEW FEATURES:
 todo: move the camera dialog to launch after I try to start a one-off session. Not just when I open the activity 
+todo: make it so that I can unblock apps during a session if I'm still in the settings activity that blocked them
 todo: make the dialog box more frog themed? 
 todo: change name? 
