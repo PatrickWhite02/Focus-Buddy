@@ -200,7 +200,7 @@ public class SettingsActivity extends Activity {
             } else {
                 // Declined (after a second decline Android stops asking, so this is the only route left)
                 showCameraSettingsDialog("Android isn't letting Focus Buddy ask for the camera. "
-                        + "Open its settings and allow the camera, then switch this on again.");
+                        + "Open its settings and allow the camera.");
             }
             return;
         }
