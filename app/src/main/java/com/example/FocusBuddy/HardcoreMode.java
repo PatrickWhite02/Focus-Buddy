@@ -25,7 +25,8 @@ public final class HardcoreMode {
                 + "You can still delete the app, but only when no session is running and "
                 + "hardcore mode is turned off in Settings.";
         if (sessionRunning) {
-            message += "\n\nYou won't be able to disable this until the block ends.";
+            message += "\n\nYou won't be able to disable this until the block ends, unless you "
+                    + "switch it back off before leaving Settings.";
         }
         new AlertDialog.Builder(a)
                 .setTitle("Turn on hardcore mode?")

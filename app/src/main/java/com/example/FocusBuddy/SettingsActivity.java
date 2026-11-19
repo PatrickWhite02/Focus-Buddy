@@ -19,7 +19,8 @@ import android.widget.TextView;
 /**
  * Settings: what to block, notifications, and hardcore mode. Also reachable during a session, where
  * things can only be tightened: more can be added to the blocklist and hardcore mode can be turned
- * on, but nothing can be removed or turned off until the session ends.
+ * on, but nothing can be removed or turned off until the session ends. The one exception is
+ * hardcore mode switched on during the current visit to this screen, which can be switched back off.
  * Also shown once, right after the accessibility service is enabled, before the main screen.
  */
 public class SettingsActivity extends Activity {
@@ -28,6 +29,13 @@ public class SettingsActivity extends Activity {
     private Switch swHardcore, swNotices, swExact, swCamera;
     private TextView tvSessionNote;
     private AlertDialog howItWorksDialog;
+    /**
+     * True when hardcore mode was switched on during this visit to Settings while a session was
+     * running, so it can still be switched off until the screen closes. Cleared when hardcore mode
+     * goes off or a session begins or ends, and gone when the screen closes.
+     */
+    private boolean hardcoreOnThisVisit = false;
+    private boolean adminWasActive, sessionWasRunning;
     private static final int REQ_NOTIFICATIONS = 1;
     private static final int REQ_CAMERA = 2;
 
@@ -38,6 +46,8 @@ public class SettingsActivity extends Activity {
 
         btnChooseApps = findViewById(R.id.btnChooseApps);
         tvSessionNote = findViewById(R.id.tvSessionNote);
+        adminWasActive = Permissions.adminActive(this);
+        sessionWasRunning = SessionStore.isActive(this);
         swHardcore = findViewById(R.id.swHardcore);
         swNotices = findViewById(R.id.swNotices);
         swExact = findViewById(R.id.swExact);
@@ -98,7 +108,7 @@ public class SettingsActivity extends Activity {
                 // Stays off until the user confirms and Android has really activated the admin
                 swHardcore.setChecked(false);
                 HardcoreMode.showWarning(this, SessionStore.isActive(this));
-            } else if (SessionStore.isActive(this)) {
+            } else if (SessionStore.isActive(this) && !hardcoreOnThisVisit) {
                 // Greyed out, but still tappable so it can say why it won't switch off
                 swHardcore.setChecked(true);
                 new AlertDialog.Builder(this)
@@ -162,11 +172,19 @@ public class SettingsActivity extends Activity {
                 : "Choose what to block (" + count + " selected)");
         // Hardcore mode simply is "device admin is active", so this also covers the admin being
         // activated or cancelled on Android's own screen, or removed from Android's settings.
-        swHardcore.setChecked(Permissions.adminActive(this));
+        boolean admin = Permissions.adminActive(this);
+        swHardcore.setChecked(admin);
         // Mid-session: more can be added to the blocklist and hardcore mode can go on, but not off
         boolean running = SessionStore.isActive(this);
+        // Whatever was on when a session begins or ends is part of it, so the exception starts over
+        if (running != sessionWasRunning) hardcoreOnThisVisit = false;
+        // Switched on during this visit, mid-session (this runs again when Android's admin screen closes)
+        if (running && admin && !adminWasActive) hardcoreOnThisVisit = true;
+        if (!admin) hardcoreOnThisVisit = false;
+        adminWasActive = admin;
+        sessionWasRunning = running;
         tvSessionNote.setVisibility(running ? View.VISIBLE : View.GONE);
-        swHardcore.setAlpha(running && Permissions.adminActive(this) ? 0.4f : 1f);
+        swHardcore.setAlpha(running && admin && !hardcoreOnThisVisit ? 0.4f : 1f);
         // On means: chosen here AND Android will show them (permission given, not blocked for the app)
         swNotices.setChecked(Permissions.noticesEnabled(this) && Permissions.notificationsAllowed(this));
         // Same idea: chosen here AND allowed by Android
