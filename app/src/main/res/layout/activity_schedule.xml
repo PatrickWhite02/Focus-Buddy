@@ -6,21 +6,35 @@
     android:padding="24dp"
     android:background="@drawable/activity_background">
 
-    <ImageButton
-        android:id="@+id/btnBack"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Back"
-        android:src="@drawable/ic_back" />
-
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/super_frog"
-        android:text="Scheduled sessions"
-        android:textColor="@color/primary_dark"
-        android:textSize="36sp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
+            android:src="@drawable/ic_back" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:autoSizeMaxTextSize="36sp"
+            android:autoSizeMinTextSize="24sp"
+            android:autoSizeStepGranularity="1sp"
+            android:autoSizeTextType="uniform"
+            android:fontFamily="@font/super_frog"
+            android:maxLines="1"
+            android:text="Scheduled sessions"
+            android:textColor="@color/primary_dark"
+            android:textSize="36sp" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tvHint"
