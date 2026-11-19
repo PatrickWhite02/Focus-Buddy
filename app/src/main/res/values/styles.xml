@@ -6,6 +6,11 @@
         <item name="android:background">@drawable/base_button_shape</item>
         <item name="android:fontFamily">@font/super_frog</item>
         <item name="android:gravity">center_vertical|center_horizontal</item>
+        <!-- Side padding keeps text off the rounded edges (the text shrinks to fit inside it),
+             and one line means it shrinks instead of wrapping -->
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+        <item name="android:maxLines">1</item>
 
         <item name="android:autoSizeTextType">uniform</item>
         <item name="android:autoSizeMinTextSize">14sp</item>
