@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -72,7 +73,13 @@ public class ScheduleActivity extends Activity {
 
     private void addDayCard(LayoutInflater inflater, String name, final int day) {
         View card = inflater.inflate(R.layout.item_schedule_day, daysContainer, false);
-        ((TextView) card.findViewById(R.id.tvDayName)).setText(name);
+        TextView tvDayName = card.findViewById(R.id.tvDayName);
+        tvDayName.setText(name);
+        if (day == ScheduleStore.EVERYDAY) {
+            // Bigger title and roomier padding so the Everyday card reads as different from the days
+            tvDayName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
+            card.setPadding(dp(28), dp(12), dp(12), dp(16));
+        }
         card.findViewById(R.id.btnAddWindow).setOnClickListener(v -> onAddWindowClicked(day));
 
         LinearLayout windows = card.findViewById(R.id.windowsContainer);
@@ -87,6 +94,11 @@ public class ScheduleActivity extends Activity {
             windows.addView(row);
         }
         daysContainer.addView(card);
+    }
+
+    private int dp(int value) {
+        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value,
+                getResources().getDisplayMetrics()));
     }
 
     private String describe(ScheduleStore.Window w) {
