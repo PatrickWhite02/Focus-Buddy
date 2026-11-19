@@ -112,6 +112,7 @@
         <Button
             android:id="@+id/btnSchedule"
             style="@style/BaseButtonStyle"
+            android:layout_marginTop="24dp"
             android:text="Scheduled sessions"
             />
 
@@ -119,6 +120,7 @@
         <Button
             android:id="@+id/btnStart"
             style="@style/BaseButtonStyle"
+            android:layout_marginTop="24dp"
             android:text="Start focus session"
             />
 
