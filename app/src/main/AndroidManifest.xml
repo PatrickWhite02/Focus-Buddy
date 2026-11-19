@@ -71,8 +71,8 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="false" />
 
-        <!-- adjustNothing: the "Add website" dialog's keyboard must not resize this screen,
-             or the bottom buttons ride up with it and then slide back down when it closes -->
+        <!-- adjustNothing: the "Block website" dialog's keyboard must not resize this screen,
+             or the layout is squeezed while it's open and then jumps back when it closes -->
         <activity
             android:name=".AppPickerActivity"
             android:screenOrientation="portrait"

@@ -56,6 +56,13 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
+    <Button
+        android:id="@+id/btnAddSite"
+        style="@style/BaseButtonStyle"
+        android:layout_height="64dp"
+        android:layout_marginBottom="12dp"
+        android:text="Block website" />
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -76,11 +83,4 @@
             android:textSize="18sp"
             android:visibility="gone" />
     </FrameLayout>
-
-    <Button
-        android:id="@+id/btnAddSite"
-        style="@style/BaseButtonStyle"
-        android:layout_height="64dp"
-        android:layout_marginTop="12dp"
-        android:text="Add website" />
 </LinearLayout>
