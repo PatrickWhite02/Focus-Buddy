@@ -8,8 +8,8 @@
         <item name="android:gravity">center_vertical|center_horizontal</item>
         <!-- Side padding keeps text off the rounded edges (the text shrinks to fit inside it),
              and one line means it shrinks instead of wrapping -->
-        <item name="android:paddingStart">20dp</item>
-        <item name="android:paddingEnd">20dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
         <item name="android:maxLines">1</item>
 
         <item name="android:autoSizeTextType">uniform</item>
