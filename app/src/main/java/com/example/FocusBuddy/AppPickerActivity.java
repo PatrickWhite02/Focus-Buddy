@@ -127,7 +127,7 @@ public class AppPickerActivity extends Activity {
         });
 
         findViewById(R.id.btnAddSite).setOnClickListener(v -> showAddSiteDialog());
-        findViewById(R.id.btnDone).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 
         blockedApps.addAll(BlocklistStore.get(this));
         blockedSites.addAll(BlocklistStore.blockedSites(this));

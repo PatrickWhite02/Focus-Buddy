@@ -35,7 +35,7 @@ That's it for accessibility permissions.
 
 ### 2. Settings (first run)
 
-Once accessibility is on, Focus Buddy opens its **Settings** screen before the main screen. Choose what to block here, and optionally switch on **Hardcore mode** (see below). Tap **Done** when you're finished; the first time, a dialog reminds you to keep your unlock QR code within reach. After that, the app opens straight to the main screen, and Settings is always available from the gear icon in its top right corner.
+Once accessibility is on, Focus Buddy opens its **Settings** screen before the main screen. Choose what to block here, and optionally switch on **Hardcore mode** (see below). Tap the back arrow in the top left when you're finished; the first time, a dialog reminds you to keep your unlock QR code within reach. After that, the app opens straight to the main screen, and Settings is always available from the gear icon in its top right corner.
 
 ## Using Focus Buddy
 

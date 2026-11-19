@@ -36,7 +36,7 @@ public class ScheduleActivity extends Activity {
         daysContainer = findViewById(R.id.daysContainer);
         tvHint = findViewById(R.id.tvHint);
         tvSessionNote = findViewById(R.id.tvSessionNote);
-        findViewById(R.id.btnDone).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
 
     @Override

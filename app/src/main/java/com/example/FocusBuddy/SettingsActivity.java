@@ -52,7 +52,7 @@ public class SettingsActivity extends Activity {
         }
 
         btnChooseApps.setOnClickListener(v -> startActivity(new Intent(this, AppPickerActivity.class)));
-        findViewById(R.id.btnDone).setOnClickListener(v -> finishSettings());
+        findViewById(R.id.btnBack).setOnClickListener(v -> finishSettings());
         findViewById(R.id.btnHowItWorks).setOnClickListener(v -> showHowItWorks());
 
         // Clicks, not checked-change listeners, so setting a switch from code (see refresh)

@@ -11,6 +11,14 @@
         android:background="@drawable/activity_background">
 
         <!-- SettingsActivity -->
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
+            android:src="@drawable/ic_back" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -197,11 +205,5 @@
             style="@style/BaseButtonStyle"
             android:layout_marginTop="16dp"
             android:text="How it works" />
-
-        <Button
-            android:id="@+id/btnDone"
-            style="@style/BaseButtonStyle"
-            android:layout_marginTop="16dp"
-            android:text="Done" />
     </LinearLayout>
 </LinearLayout>
