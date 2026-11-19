@@ -65,15 +65,6 @@
             android:textSize="20sp"
             android:theme="@style/PurpleControls" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/super_frog"
-            android:paddingTop="8dp"
-            android:text="Or:"
-            android:textColor="@color/primary_dark"
-            android:textSize="20sp" />
-
         <!-- The clock and boxes, with an invisible layer on top that soaks up touches while
              "Block indefinitely" is ticked (the clock face ignores setEnabled).
              RelativeLayout, not FrameLayout: the layer is sized by aligning it to the controls,
@@ -92,7 +83,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/super_frog"
-                    android:text="Block until"
+                    android:paddingTop="28dp"
+                    android:text="Or block until:"
                     android:textColor="@color/primary_dark"
                     android:textSize="20sp" />
 
