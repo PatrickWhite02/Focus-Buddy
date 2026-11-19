@@ -197,7 +197,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/super_frog"
-            android:paddingTop="4dp"
+            android:paddingTop="24dp"
             android:textColor="@color/primary_dark"
             android:textSize="16sp" />
 
