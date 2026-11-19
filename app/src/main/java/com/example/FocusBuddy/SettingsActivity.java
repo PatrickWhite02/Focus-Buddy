@@ -218,7 +218,7 @@ public class SettingsActivity extends Activity {
             } else {
                 // Declined (after a second decline Android stops asking, so this is the only route left)
                 showCameraSettingsDialog("Android isn't letting Focus Buddy ask for the camera. "
-                        + "Open its settings and allow the camera, if you still wish to enable it. You can alwaysrrely on your phones built-in camera as an alternative.");
+                        + "Open its settings and allow the camera, if you still wish to enable it. You can always rely on your phones built-in camera as an alternative.");
             }
             return;
         }
@@ -235,7 +235,7 @@ public class SettingsActivity extends Activity {
         new AlertDialog.Builder(this)
                 .setTitle("Notifications are turned off")
                 .setMessage("Android isn't letting Focus Buddy ask for the notification permissions. "
-                        + "Open its settings and allow them, if you still wish to enable them."")
+                        + "Open its settings and allow them, if you still wish to enable them.")
                 .setPositiveButton("Open settings", (d, w) -> startActivity(
                         new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                                 .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName())))
