@@ -3,9 +3,6 @@ todo: test the scheduled blocks through hardcore/regular, and force stops
 todo: test the 'universal' tab in schedule
 todo: let them edit the schedule during a block. Just don't let that disable the active one
 todo: test the new permission request flow
-todo: remove the "then switch this on again" thing from the camera setting
-todo: make the "done" buttons back arrows 
-todo: make it so that the hardcore mode can be switched off during a session if they turned it on during that session and they're still in the settings activity that turned it on. Going back to main and then back into settings shouldn't let them, though
 
 NEW FEATURES:
 todo: make the dialog box more frog themed? 
