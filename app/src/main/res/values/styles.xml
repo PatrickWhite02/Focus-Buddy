@@ -46,4 +46,11 @@
         <item name="android:textSize">22sp</item>
         <item name="android:textColor">@color/clock_header_text</item>
     </style>
+
+    <!-- The scheduler's start/end time pop-ups: the same purple clock as the Start session screen -->
+    <style name="FocusTimePickerDialog" parent="@android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">@color/primary_dark</item>
+        <item name="android:colorControlActivated">@color/primary_dark</item>
+        <item name="android:timePickerStyle">@style/FocusTimePicker</item>
+    </style>
 </resources>

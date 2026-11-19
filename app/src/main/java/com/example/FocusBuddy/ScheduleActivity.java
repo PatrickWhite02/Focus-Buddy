@@ -135,11 +135,11 @@ public class ScheduleActivity extends Activity {
     private void promptForWindow(final int day) {
         final boolean use24h = DateFormat.is24HourFormat(this);
 
-        TimePickerDialog startDialog = new TimePickerDialog(this, (view, startHour, startMinute) -> {
+        TimePickerDialog startDialog = new TimePickerDialog(this, R.style.FocusTimePickerDialog, (view, startHour, startMinute) -> {
             final int startMin = startHour * 60 + startMinute;
             int suggestedEnd = (startMin + 60) % (24 * 60);
 
-            TimePickerDialog endDialog = new TimePickerDialog(this, (v, endHour, endMinute) -> {
+            TimePickerDialog endDialog = new TimePickerDialog(this, R.style.FocusTimePickerDialog, (v, endHour, endMinute) -> {
                 int endMin = endHour * 60 + endMinute;
                 if (endMin == startMin) {
                     Toast.makeText(this, "The end time has to be different from the start time",
