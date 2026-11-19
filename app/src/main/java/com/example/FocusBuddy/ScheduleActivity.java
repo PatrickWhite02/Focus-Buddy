@@ -79,6 +79,10 @@ public class ScheduleActivity extends Activity {
             // Bigger title and roomier padding so the Everyday card reads as different from the days
             tvDayName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 30);
             card.setPadding(dp(28), dp(12), dp(12), dp(16));
+            // A clearly bigger gap before the first day card (the others use the layout's 12dp)
+            LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) card.getLayoutParams();
+            lp.bottomMargin = dp(36);
+            card.setLayoutParams(lp);
         }
         card.findViewById(R.id.btnAddWindow).setOnClickListener(v -> onAddWindowClicked(day));
 
