@@ -62,7 +62,8 @@
             android:paddingTop="8dp"
             android:paddingBottom="24dp"
             android:fontFamily="@font/super_frog"
-            android:textSize="16sp" />
+            android:textColor="@color/primary_dark"
+            android:textSize="18sp" />
 
         <!-- Only while a session is running: the countdown, or when the block lifts -->
         <TextView
@@ -85,8 +86,8 @@
             android:fontFamily="@font/super_frog"
             android:gravity="center"
             android:paddingBottom="24dp"
-            android:textColor="@color/text_secondary"
-            android:textSize="18sp"
+            android:textColor="@color/primary_dark"
+            android:textSize="20sp"
             android:visibility="gone" />
 
         <!-- Hidden unless a scheduled block is coming up -->
@@ -96,7 +97,7 @@
             android:layout_height="wrap_content"
             android:fontFamily="@font/super_frog"
             android:textColor="@color/primary_dark"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:visibility="gone" />
 
         <!-- Unticking skips just that upcoming block; the schedule itself is kept -->
@@ -106,7 +107,11 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:checked="true"
+            android:fontFamily="@font/super_frog"
             android:text="Enable"
+            android:textColor="@color/primary_dark"
+            android:textSize="20sp"
+            android:theme="@style/PurpleControls"
             android:visibility="gone" />
 
         <Button

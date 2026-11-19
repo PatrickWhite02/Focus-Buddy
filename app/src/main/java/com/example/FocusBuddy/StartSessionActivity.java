@@ -126,7 +126,7 @@ public class StartSessionActivity extends Activity {
             note.setText(checked ? indefiniteNote : timedNote);
         });
 
-        findViewById(R.id.btnCancel).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnStartSession).setOnClickListener(v -> onStartClicked(indefinite.isChecked()));
     }
 

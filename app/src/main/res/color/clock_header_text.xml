@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Clock header (hour, minute, AM/PM): the one being set is solid purple, the others faded -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_activated="true" android:color="@color/primary_dark" />
+    <item android:color="#80704EC5" />
+</selector>

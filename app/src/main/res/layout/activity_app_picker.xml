@@ -43,7 +43,8 @@
         android:paddingTop="8dp"
         android:paddingBottom="12dp"
         android:fontFamily="@font/super_frog"
-        android:textSize="16sp" />
+        android:textColor="@color/primary_dark"
+        android:textSize="18sp" />
 
     <!-- Only while a session is running -->
     <TextView
@@ -51,9 +52,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="12dp"
+        android:fontFamily="@font/super_frog"
         android:text="A session is running. You can add apps and websites to block. Anything already blocked stays blocked until it ends, except things you switch on during this visit, which you can still switch off until you leave this screen."
-        android:textColor="@color/text_secondary"
-        android:textSize="14sp"
+        android:textColor="@color/primary_dark"
+        android:textSize="16sp"
         android:visibility="gone" />
 
     <Button
@@ -80,7 +82,8 @@
             android:gravity="center"
             android:fontFamily="@font/super_frog"
             android:text="No apps found"
-            android:textSize="18sp"
+            android:textColor="@color/primary_dark"
+            android:textSize="20sp"
             android:visibility="gone" />
     </FrameLayout>
 </LinearLayout>

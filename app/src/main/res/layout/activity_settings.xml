@@ -47,9 +47,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="4dp"
+            android:fontFamily="@font/super_frog"
             android:text="A session is running. You can add things to block and turn hardcore mode on, but nothing can be removed or turned off until it ends."
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp"
+            android:textColor="@color/primary_dark"
+            android:textSize="16sp"
             android:visibility="gone" />
 
         <Button
@@ -84,9 +85,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/super_frog"
                     android:text="A heads-up 10, 5 and 1 minute before a scheduled session starts, and when it starts."
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textColor="@color/primary_dark"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <Switch
@@ -124,9 +126,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/super_frog"
                     android:text="Use exact alarms so notifications arrive right on time, instead of up to a few minutes late."
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textColor="@color/primary_dark"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <Switch
@@ -164,9 +167,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/super_frog"
                     android:text="Lets the built-in scanner read your unlock QR code. Without it, scan the QR code with your phone's regular camera app."
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textColor="@color/primary_dark"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <Switch
@@ -202,9 +206,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/super_frog"
                     android:text="Stops Focus Buddy being uninstalled, and locks its Android settings pages during a session."
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textColor="@color/primary_dark"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <Switch

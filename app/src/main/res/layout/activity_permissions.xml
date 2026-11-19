@@ -27,14 +27,17 @@
             android:paddingBottom="24dp"
             android:fontFamily="@font/super_frog"
             android:text="No session running."
-            android:textSize="16sp" />
+            android:textColor="@color/primary_dark"
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/tvSetup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/super_frog"
-            android:paddingBottom="12dp" />
+            android:paddingBottom="12dp"
+            android:textColor="@color/primary_dark"
+            android:textSize="18sp" />
 
         <Button
             android:id="@+id/btnAccessibility"

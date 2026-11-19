@@ -17,4 +17,33 @@
         <item name="android:autoSizeMaxTextSize">30sp</item>
         <item name="android:autoSizeStepGranularity">5sp</item>
     </style>
+
+    <!-- Put on a view with android:theme to give it the app's purple instead of the system's
+         green accent (checkbox tick, text cursor, selection highlight, clock hand) -->
+    <style name="PurpleControls">
+        <item name="android:colorAccent">@color/primary_dark</item>
+        <item name="android:colorControlActivated">@color/primary_dark</item>
+    </style>
+
+    <!-- The "Block until" clock: no coloured header bar, purple title-style time text -->
+    <style name="FocusTimePicker" parent="@android:style/Widget.Material.Light.TimePicker">
+        <item name="android:headerBackground">@android:color/transparent</item>
+        <item name="android:headerTimeTextAppearance">@style/FocusClockHeaderText</item>
+        <item name="android:headerAmPmTextAppearance">@style/FocusClockAmPmText</item>
+        <item name="android:numbersTextColor">@color/clock_numbers_text</item>
+        <item name="android:numbersBackgroundColor">#66D0BCFF</item>
+        <item name="android:numbersSelectorColor">@color/primary_dark</item>
+    </style>
+
+    <style name="FocusClockHeaderText">
+        <item name="android:fontFamily">@font/super_frog</item>
+        <item name="android:textSize">56sp</item>
+        <item name="android:textColor">@color/clock_header_text</item>
+    </style>
+
+    <style name="FocusClockAmPmText">
+        <item name="android:fontFamily">@font/super_frog</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/clock_header_text</item>
+    </style>
 </resources>

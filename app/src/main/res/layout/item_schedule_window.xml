@@ -10,8 +10,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textColor="@color/text_secondary"
-        android:textSize="14sp" />
+        android:fontFamily="@font/super_frog"
+        android:textColor="@color/primary_dark"
+        android:textSize="18sp" />
 
     <ImageButton
         android:id="@+id/btnRemoveWindow"

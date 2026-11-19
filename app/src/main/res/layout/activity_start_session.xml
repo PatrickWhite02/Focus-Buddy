@@ -12,23 +12,46 @@
         android:padding="24dp">
 
         <!-- StartSessionActivity -->
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/super_frog"
-            android:text="Start session"
-            android:textColor="@color/primary_dark"
-            android:textSize="40sp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_back" />
+
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:autoSizeMaxTextSize="40sp"
+                android:autoSizeMinTextSize="24sp"
+                android:autoSizeStepGranularity="1sp"
+                android:autoSizeTextType="uniform"
+                android:fontFamily="@font/super_frog"
+                android:maxLines="1"
+                android:text="Start session"
+                android:textColor="@color/primary_dark"
+                android:textSize="40sp" />
+        </LinearLayout>
 
         <!-- Only when extending a running session -->
         <TextView
             android:id="@+id/tvExtendInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="4dp"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp"
+            android:fontFamily="@font/super_frog"
+            android:paddingTop="8dp"
+            android:textColor="@color/primary_dark"
+            android:textSize="16sp"
             android:visibility="gone" />
 
         <!-- The clock and boxes, with an invisible layer on top that soaks up touches while
@@ -57,6 +80,8 @@
                 <!-- The clock: the block ends the next time it reads this -->
                 <TimePicker
                     android:id="@+id/timePicker"
+                    style="@style/FocusTimePicker"
+                    android:theme="@style/PurpleControls"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:timePickerMode="clock" />
@@ -73,12 +98,14 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:orientation="horizontal">
 
                     <!-- Labels sit under the boxes (not as hints) so they stay visible once a value is in -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
                         android:layout_weight="1"
                         android:orientation="vertical">
 
@@ -86,23 +113,32 @@
                             android:id="@+id/etHours"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:background="@drawable/schedule_day_card"
+                            android:fontFamily="@font/super_frog"
                             android:gravity="center"
                             android:importantForAutofill="no"
                             android:inputType="number"
-                            android:maxLength="3" />
+                            android:maxLength="3"
+                            android:padding="12dp"
+                            android:textColor="@color/primary_dark"
+                            android:textSize="28sp"
+                            android:theme="@style/PurpleControls" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:fontFamily="@font/super_frog"
                             android:gravity="center"
+                            android:paddingTop="4dp"
                             android:text="hours"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14sp" />
+                            android:textColor="@color/primary_dark"
+                            android:textSize="16sp" />
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:orientation="vertical">
 
@@ -110,18 +146,26 @@
                             android:id="@+id/etMinutes"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:background="@drawable/schedule_day_card"
+                            android:fontFamily="@font/super_frog"
                             android:gravity="center"
                             android:importantForAutofill="no"
                             android:inputType="number"
-                            android:maxLength="4" />
+                            android:maxLength="4"
+                            android:padding="12dp"
+                            android:textColor="@color/primary_dark"
+                            android:textSize="28sp"
+                            android:theme="@style/PurpleControls" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:fontFamily="@font/super_frog"
                             android:gravity="center"
+                            android:paddingTop="4dp"
                             android:text="minutes"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14sp" />
+                            android:textColor="@color/primary_dark"
+                            android:textSize="16sp" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
@@ -142,39 +186,27 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Block indefinitely" />
+            android:fontFamily="@font/super_frog"
+            android:text="Block indefinitely"
+            android:textColor="@color/primary_dark"
+            android:textSize="20sp"
+            android:theme="@style/PurpleControls" />
 
         <TextView
             android:id="@+id/tvNote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/super_frog"
             android:paddingTop="4dp"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp" />
+            android:textColor="@color/primary_dark"
+            android:textSize="16sp" />
 
-        <LinearLayout
+        <Button
+            android:id="@+id/btnStartSession"
+            style="@style/BaseButtonStyle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="64dp"
             android:layout_marginTop="16dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnCancel"
-                style="@style/BaseButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="64dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:text="Cancel" />
-
-            <Button
-                android:id="@+id/btnStartSession"
-                style="@style/BaseButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="64dp"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:text="Start" />
-        </LinearLayout>
+            android:text="Start" />
     </LinearLayout>
 </ScrollView>
