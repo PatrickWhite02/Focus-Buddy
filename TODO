@@ -1,19 +1,12 @@
 TEST IMPLEMENTED FEATURES:
 todo: test the scheduled blocks through hardcore/regular, and force stops
-todo: buttons dissappear when I activate indefinite block
 todo: test the 'universal' tab in schedule
 todo: let them edit the schedule during a block. Just don't let that disable the active one
-todo: allow extending the session while in one. Just can't shorten it
-todo: let them add more apps to the block mid-run. Just can't remove them
-todo: let them turn on harcore mode during s session, just can't turn it off
-todo: make a strong warning to have the qr code accesible before first run? 
-todo: make it easy to disable upcoming scheduled sessions without outright deleting the entry. On home page and in alarms, just add a "disable upcoming alarm" thing
-todo: Make the main activity tell them "can't uninstall until the session ends and you disable hardcore mode"
-todo: make an instruction tab in settings?
-todo: customize the dialog for killing the settings page and uninstall page to alert the user they can't while hardcore mode is active. Scan the qr code to disable the session to access the settings, disable hardcore to uninstall 
 todo: test the new permission request flow
-todo: make it so that I can unblock apps during a session if I'm still in the settings activity that blocked them
 
 NEW FEATURES:
+todo: remove the "then switch this on again" thing from the camera setting
+todo: make the "done" buttons back arrows 
+todo: make it so that the hardcore mode can be switched off during a session if they turned it on during that session and they're still in the settings activity that turned it on. Going back to main and then back into settings shouldn't let them, though
 todo: make the dialog box more frog themed? 
 todo: change name? 
