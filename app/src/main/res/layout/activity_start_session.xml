@@ -54,14 +54,33 @@
             android:textSize="16sp"
             android:visibility="gone" />
 
+        <CheckBox
+            android:id="@+id/cbIndefinite"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/super_frog"
+            android:text="Block indefinitely"
+            android:textColor="@color/primary_dark"
+            android:textSize="20sp"
+            android:theme="@style/PurpleControls" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/super_frog"
+            android:paddingTop="8dp"
+            android:text="Or:"
+            android:textColor="@color/primary_dark"
+            android:textSize="20sp" />
+
         <!-- The clock and boxes, with an invisible layer on top that soaks up touches while
              "Block indefinitely" is ticked (the clock face ignores setEnabled).
              RelativeLayout, not FrameLayout: the layer is sized by aligning it to the controls,
              so it can never stretch this block and push the checkbox and buttons off screen -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:id="@+id/timeControls"
@@ -180,17 +199,6 @@
                 android:focusable="true"
                 android:visibility="gone" />
         </RelativeLayout>
-
-        <CheckBox
-            android:id="@+id/cbIndefinite"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:fontFamily="@font/super_frog"
-            android:text="Block indefinitely"
-            android:textColor="@color/primary_dark"
-            android:textSize="20sp"
-            android:theme="@style/PurpleControls" />
 
         <TextView
             android:id="@+id/tvNote"

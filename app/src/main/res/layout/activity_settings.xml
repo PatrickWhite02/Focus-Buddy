@@ -87,7 +87,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/super_frog"
                     android:text="A heads-up 10, 5 and 1 minute before a scheduled session starts, and when it starts."
-                    android:textColor="@color/primary_dark"
+                    android:textColor="@color/text_secondary"
                     android:textSize="16sp" />
             </LinearLayout>
 
@@ -128,7 +128,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/super_frog"
                     android:text="Use exact alarms so notifications arrive right on time, instead of up to a few minutes late."
-                    android:textColor="@color/primary_dark"
+                    android:textColor="@color/text_secondary"
                     android:textSize="16sp" />
             </LinearLayout>
 
@@ -169,7 +169,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/super_frog"
                     android:text="Lets the built-in scanner read your unlock QR code. Without it, scan the QR code with your phone's regular camera app."
-                    android:textColor="@color/primary_dark"
+                    android:textColor="@color/text_secondary"
                     android:textSize="16sp" />
             </LinearLayout>
 
@@ -208,7 +208,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/super_frog"
                     android:text="Stops Focus Buddy being uninstalled, and locks its Android settings pages during a session."
-                    android:textColor="@color/primary_dark"
+                    android:textColor="@color/text_secondary"
                     android:textSize="16sp" />
             </LinearLayout>
 
