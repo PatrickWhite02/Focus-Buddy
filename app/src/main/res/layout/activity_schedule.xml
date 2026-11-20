@@ -41,10 +41,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="8dp"
-        android:fontFamily="@font/super_frog"
         android:text="Nothing is selected to block yet, so scheduled sessions won't block anything. Choose apps or websites first."
-        android:textColor="@color/primary_dark"
-        android:textSize="16sp"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
         android:visibility="gone" />
 
     <!-- Only while a session is running -->
@@ -53,10 +52,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="8dp"
-        android:fontFamily="@font/super_frog"
         android:text="A session is running, so changes here won't affect it. Anything you add or remove applies from the next time it comes around (next week for a day, tomorrow for Everyday)."
-        android:textColor="@color/primary_dark"
-        android:textSize="16sp"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
         android:visibility="gone" />
 
     <ScrollView
