@@ -56,8 +56,11 @@ public class SettingsActivity extends Activity {
         // stays put while the user is in here (even after they allow it) and is gone the next visit.
         findViewById(R.id.cardCamera).setVisibility(
                 PermissionPrompts.cameraGranted(this) ? View.GONE : View.VISIBLE);
-        // Before Android 12 exact alarms are always allowed, so there's nothing to choose
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+        // Only offered when precise timing isn't already on. Before Android 12 exact alarms are always
+        // allowed, so there's nothing to choose. Like the camera card, decided once when Settings
+        // opens (so it stays put while the user is in here) and gone the next visit once it's on.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+                || (Permissions.exactAlarmsEnabled(this) && Permissions.exactAlarmsAllowed(this))) {
             findViewById(R.id.cardExact).setVisibility(View.GONE);
         }
 
