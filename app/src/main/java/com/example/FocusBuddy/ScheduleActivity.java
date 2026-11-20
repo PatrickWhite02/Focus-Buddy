@@ -2,11 +2,14 @@ package com.example.FocusBuddy;
 
 import android.app.Activity;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -150,9 +153,43 @@ public class ScheduleActivity extends Activity {
                 renderDays();
             }, suggestedEnd / 60, suggestedEnd % 60, use24h);
             endDialog.setTitle("Blocking ends at");
-            endDialog.show();
+            showWithMinutesStep(endDialog);
         }, 9, 0, use24h);
         startDialog.setTitle("Blocking starts at");
-        startDialog.show();
+        showWithMinutesStep(startDialog);
+    }
+
+    /**
+     * Shows a time dialog whose button says "Next" while the hour is being picked: pressing it
+     * moves on to the minutes instead of closing, so minutes can be set without touching the hour
+     * hand. Once the minutes are showing it says "OK" and confirms as usual.
+     * If the clock's header views can't be found, the normal OK button is left alone.
+     */
+    private void showWithMinutesStep(final TimePickerDialog dialog) {
+        dialog.show();
+        final Resources system = Resources.getSystem();
+        final int hoursId = system.getIdentifier("hours", "id", "android");
+        final int minutesId = system.getIdentifier("minutes", "id", "android");
+        final Button ok = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+        final View hours = hoursId == 0 ? null : dialog.findViewById(hoursId);
+        final View minutes = minutesId == 0 ? null : dialog.findViewById(minutesId);
+        if (ok == null || hours == null || minutes == null) return;
+
+        // The header number being set is the "activated" one
+        ok.setOnClickListener(v -> {
+            if (hours.isActivated()) {
+                minutes.performClick();
+            } else {
+                dialog.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
+                dialog.dismiss();
+            }
+        });
+        // Keep the label in step with what the button will do (also when the minutes are tapped directly)
+        hours.getViewTreeObserver().addOnPreDrawListener(() -> {
+            final String label = hours.isActivated() ? "Next" : "OK";
+            if (!label.contentEquals(ok.getText())) ok.setText(label);
+            return true;
+        });
+        ok.setText(hours.isActivated() ? "Next" : "OK");
     }
 }
