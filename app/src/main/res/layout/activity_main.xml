@@ -61,9 +61,8 @@
             android:layout_height="wrap_content"
             android:paddingTop="8dp"
             android:paddingBottom="24dp"
-            android:fontFamily="@font/super_frog"
-            android:textColor="@color/primary_dark"
-            android:textSize="18sp" />
+            android:textColor="@color/text_secondary"
+            android:textSize="16sp" />
 
         <!-- Only while a session is running: the countdown, or when the block lifts -->
         <TextView
