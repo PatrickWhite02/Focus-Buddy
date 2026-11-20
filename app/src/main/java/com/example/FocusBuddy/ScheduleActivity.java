@@ -9,8 +9,10 @@ import android.text.format.DateFormat;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TimePicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -159,6 +161,19 @@ public class ScheduleActivity extends Activity {
         showWithMinutesStep(startDialog);
     }
 
+    /** The first TimePicker anywhere inside the given view, or null. */
+    private static TimePicker findTimePicker(View root) {
+        if (root instanceof TimePicker) return (TimePicker) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                TimePicker found = findTimePicker(group.getChildAt(i));
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
     /**
      * Shows a time dialog whose button says "Next" while the hour is being picked: pressing it
      * moves on to the minutes instead of closing, so minutes can be set without touching the hour
@@ -167,7 +182,8 @@ public class ScheduleActivity extends Activity {
      */
     private void showWithMinutesStep(final TimePickerDialog dialog) {
         dialog.show();
-        ClockAmPm.attach(dialog.getTimePicker()); // winding the hour hand past 12 flips AM/PM
+        // getTimePicker() isn't public API, so find the clock in the dialog's views instead
+        ClockAmPm.attach(findTimePicker(dialog.getWindow().getDecorView())); // winding past 12 flips AM/PM
         final Resources system = Resources.getSystem();
         final int hoursId = system.getIdentifier("hours", "id", "android");
         final int minutesId = system.getIdentifier("minutes", "id", "android");
