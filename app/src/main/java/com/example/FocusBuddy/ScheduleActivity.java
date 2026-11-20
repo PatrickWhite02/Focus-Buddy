@@ -167,6 +167,7 @@ public class ScheduleActivity extends Activity {
      */
     private void showWithMinutesStep(final TimePickerDialog dialog) {
         dialog.show();
+        ClockAmPm.attach(dialog.getTimePicker()); // winding the hour hand past 12 flips AM/PM
         final Resources system = Resources.getSystem();
         final int hoursId = system.getIdentifier("hours", "id", "android");
         final int minutesId = system.getIdentifier("minutes", "id", "android");

@@ -80,7 +80,8 @@ public class StartSessionActivity extends Activity {
         clock.setHour(def.get(Calendar.HOUR_OF_DAY));
         clock.setMinute(def.get(Calendar.MINUTE));
 
-        clock.setOnTimeChangedListener((view, hour, minute) -> {
+        // Winding the hour hand past 12 flips AM/PM; syncing means the change came from the boxes
+        ClockAmPm.attach(clock, () -> syncing, (view, hour, minute) -> {
             if (syncing) return;
             byDuration = false;
             clockToBoxes();
